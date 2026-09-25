@@ -7,12 +7,13 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 
 ## Now
 - Source of truth: https://github.com/yitzhach/AR-WALLE, branch `main`.
-- Latest inspected main before this documentation update: `87f7cfba949059cfac462ba3900690ff4d1db93d`.
+- Continued main from `cb7773e`; this commit includes focused panorama and pinch-control fixes.
 - Newer label/texture fixes ARE present on main. The previous handoff's claim
   that work existed only on `claude/clever-gauss-d9yxje` was stale.
 - Cloudflare deployment is unverified; no live Cloudflare URL was supplied here.
 - Real iPhone wall placement, physical scale, pinch/reset and shadows remain unverified.
-- This update changes documentation only; tests were not rerun for this update.
+- This update: 13/13 Node tests and production build pass.
+- Browser smoke test blocked: Chromium unavailable and its download failed.
 
 ## Done
 - Dark default/light toggle; original artwork sample; JPG/PNG uploads.
@@ -22,6 +23,9 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 - Non-AI image adjustments/flips; optional simulated gallery lighting.
 - Browser-local saved library, portable backup/import, soft removal/undo.
 - AR dimensions and measured-wall guide; pinch mode and reset to entered size.
+- Pinch control now unchecks when overlays lock scale; enabling pinch hides overlays.
+  Launch URLs explicitly request scaling on/off. Native pinch still needs iPhone retest.
+- Panorama default fixed: 48-inch longest edge; 6:1 uploads start at 48 × 8 inches.
 - Latest main: labels preserve 8:1 ratio; art material opaque; textures capped at
   4096 pixels; originals unchanged in library; derivatives JPEG .92 or PNG.
 - Prior session reports 11/11 tests, build and OpenUSD validation passing.
@@ -42,10 +46,8 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 
 ## Next
 1. Fetch current main; read README/DECISIONS. Preserve any newer work.
-2. Fix confirmed panorama default bug: 48-inch height makes a 6:1 upload 288 inches
-   wide, exceeding the 240-inch limit. Prefer longest edge 48 inches; update README
-   and test. This is a routine valid-default fix, not a change to the project goal.
-   Do not assume this caused the earlier stalled file automation; that is unproven.
+2. Retest reported pinch issue on iPhone with measurements off and pinch on.
+   Confirm a fresh launch URL ends in `#allowsContentScaling=1`.
 3. Test upload, image edits, export USDZ, library save/reload, backup/restore and
    mobile layout. Investigate failures; add focused regression tests.
 4. Confirm Cloudflare URL/settings with user if not available. Pages: branch main,
@@ -57,7 +59,13 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
    Specifically verify Blob URL launch with download attribute, scale-lock fragment,
    pinch response and reset/relaunch. Use native screenshots; no webpage capture API.
 
-## Backlog — after functional validation
+## A–F status / Backlog — after functional validation
+- A: fixed and regression tested in this update.
+- B: performance work below remains pending; soft delete/undo is intentional.
+- C: backup validation/copy import exists; field whitelisting and PWA remain pending.
+- D: Node tests/build exist; lint/type checks/CI/browser suite remain pending.
+- E: dark/light toggle, limits and metadata exist; polish below remains pending.
+- F: Cloudflare deployment and real-iPhone acceptance remain unverified.
 - Performance: CRC lookup table; cache texture bytes/CRCs; precompute edit constants;
   consider workers only if measured stalls justify them; small library thumbnails.
 - Data safety: whitelist imported fields; explore persistent-storage/PWA support.

@@ -1,4 +1,4 @@
-import {INITIAL_EDITS,INITIAL_SCENE,createPiece,layoutPieces,setDimension,arFragment,validateRecord,fmt} from './state.mjs';
+import {INITIAL_EDITS,INITIAL_SCENE,createPiece,layoutPieces,setDimension,setScaleOption,arFragment,validateRecord,fmt} from './state.mjs';
 import {saveMany,listSaved,trash,restore} from './storage.mjs';
 import {detectImage,loadImage,renderTexture,makeShadow,makeLabel} from './images.mjs';
 import {build} from './model.mjs';
@@ -13,8 +13,8 @@ function setTheme(mode){theme=mode;document.documentElement.dataset.theme=theme;
 try{theme=localStorage.getItem('ar-walle-theme')==='light'?'light':'dark'}catch{}setTheme(theme);
 $('theme').addEventListener('click',()=>setTheme(theme==='dark'?'light':'dark'));
 function readScene(){for(const key of ['gap','wallWidth','wallHeight'])settings[key]=Number($(key).value);settings.layout=$('layout').value;for(const key of ['shadow','gallery','dimensions','wallGuide','resize'])settings[key]=$(key).checked;
- const locked=settings.dimensions||settings.wallGuide;$('resize').disabled=locked;
- $('scale-note').textContent=locked?'Measurements lock scale. Hide dimension labels and the wall guide to enable pinching.':settings.resize?'Pinch enabled. Entered dimensions are the starting size; AR cannot report the final resized dimensions.':'True-size mode. Pinching is disabled; change dimensions here and relaunch.';
+ const locked=settings.dimensions||settings.wallGuide;if(locked){settings.resize=false;$('resize').checked=false;}
+ $('scale-note').textContent=locked?'Measurements lock scale. Enable pinch resizing to hide measurements and resize in AR.':settings.resize?'Pinch enabled. Entered dimensions are the starting size; AR cannot report the final resized dimensions.':'True-size mode. Pinching is disabled; change dimensions here and relaunch.';
 }
 function setARDisabled(text){arBlob=null;$('launch').removeAttribute('href');$('launch').setAttribute('aria-disabled','true');$('download').disabled=true;$('ar-status').textContent=text;}
 function invalidate(){generation++;clearTimeout(timer);readScene();setARDisabled('Preparing your arrangement…');paintPreview();timer=setTimeout(prepare,300);}
@@ -76,7 +76,12 @@ for(const key of ['depth','color'])$(key).addEventListener('input',()=>{const p=
 for(const key of ['flipH','flipV'])$(key).addEventListener('click',()=>{const p=active();if(p){p.edits[key]=!p.edits[key];syncInspector();invalidate();}});
 $('reset-edits').addEventListener('click',()=>{const p=active();if(p){p.edits={...INITIAL_EDITS};syncInspector();invalidate();notice('Image adjustments reset. Turn off Gallery lighting for the original appearance.');}});
 $('eyedropper').addEventListener('click',()=>{picking=!picking;syncInspector();paintPreview();if(picking)notice('Tap a color on the selected artwork in the wall preview.');});
-for(const key of ['layout','gap','shadow','gallery','dimensions','resize','wallGuide','wallWidth','wallHeight'])$(key).addEventListener('input',invalidate);
+for(const key of ['dimensions','resize','wallGuide'])$(key).addEventListener('input',()=>{
+ setScaleOption(settings,key,$(key).checked);
+ for(const option of ['dimensions','resize','wallGuide'])$(option).checked=settings[option];
+ invalidate();
+});
+for(const key of ['layout','gap','shadow','gallery','wallWidth','wallHeight'])$(key).addEventListener('input',invalidate);
 $('reset-ar').addEventListener('click',()=>{invalidate();notice('Close AR, then reopen VIEW ON MY WALL to restore the entered dimensions.');});
 $('launch').addEventListener('click',e=>{if(!supportsAR||!arBlob||$('launch').getAttribute('aria-disabled')==='true'){e.preventDefault();return;}newARLink();});
 function download(blob,name){const url=URL.createObjectURL(blob),a=element('a',{href:url,download:name});document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),120000);}

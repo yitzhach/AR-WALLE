@@ -5,7 +5,7 @@ export const LABEL_ASPECT=8;
 export const MAX_TEXTURE=4096;
 export const INITIAL_SCENE = Object.freeze({layout:'row',gap:3,shadow:true,gallery:false,dimensions:false,wallGuide:false,wallWidth:120,wallHeight:96,resize:true});
 export function createPiece(id,name,blob,pixelWidth,pixelHeight,normalize=false){
- return {id,name,blob,pixelWidth,pixelHeight,normalize,width:48*pixelWidth/pixelHeight,height:48,depth:3.5,color:'#747474',aspect:true,ratio:pixelWidth/pixelHeight,edits:{...INITIAL_EDITS}};
+ return {id,name,blob,pixelWidth,pixelHeight,normalize,width:48*pixelWidth/Math.max(pixelWidth,pixelHeight),height:48*pixelHeight/Math.max(pixelWidth,pixelHeight),depth:3.5,color:'#747474',aspect:true,ratio:pixelWidth/pixelHeight,edits:{...INITIAL_EDITS}};
 }
 export function validatePiece(p){
  for(const key of ['width','height'])if(!Number.isFinite(p[key])||p[key]<1||p[key]>240)throw Error('Artwork width and height must be 1–240 inches.');
@@ -27,7 +27,13 @@ export function layoutPieces(pieces,scene){
  const width=widths.reduce((a,b)=>a+b,0)+scene.gap*(cols-1),height=heights.reduce((a,b)=>a+b,0)+scene.gap*(rows-1);
  return {width,height,items:pieces.map((p,i)=>{const col=i%cols,row=Math.floor(i/cols);return {...p,x:-width/2+widths.slice(0,col).reduce((a,b)=>a+b,0)+scene.gap*col+widths[col]/2,y:height/2-heights.slice(0,row).reduce((a,b)=>a+b,0)-scene.gap*row-heights[row]/2};})};
 }
-export function arFragment(s){return s.resize&&!s.dimensions&&!s.wallGuide?'':'#allowsContentScaling=0';}
+export function setScaleOption(s,key,enabled){
+ s[key]=enabled;
+ if(key==='resize'&&enabled){s.dimensions=false;s.wallGuide=false;}
+ if((key==='dimensions'||key==='wallGuide')&&enabled)s.resize=false;
+ return s;
+}
+export function arFragment(s){return '#allowsContentScaling='+(s.resize&&!s.dimensions&&!s.wallGuide?'1':'0');}
 export const fmt=n=>Number(n.toFixed(2)).toString();
 export function validateRecord(r){
  if(!r||typeof r.name!=='string'||r.name.length>160||!(r.blob instanceof Blob)||!['image/jpeg','image/png'].includes(r.blob.type)||r.blob.size>15*1024*1024)throw Error('Invalid library artwork.');
