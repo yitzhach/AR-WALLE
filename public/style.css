@@ -4,3 +4,20 @@
 @media(min-width:1450px){.wall-wrap{height:560px}.studio{grid-template-columns:250px minmax(450px,1fr) 320px}}
 @media(max-width:1050px){.studio{grid-template-columns:minmax(0,1fr) 300px}.library{grid-column:1/-1}.library-list{grid-template-columns:repeat(auto-fill,minmax(175px,1fr));margin-top:12px}.library>.primary{width:auto}.library-footer{margin-top:12px}.library-card{padding-bottom:0;border:0}.library .quiet{margin-bottom:6px}.section-heading{margin-bottom:12px}}
 @media(max-width:700px){.topbar{padding:0 18px;height:64px;gap:12px}.header-note{display:none}.studio{display:flex;flex-direction:column;padding:14px;gap:18px}.studio>*{width:100%}.workspace{order:0}.inspector{order:1}.library{order:2}.workspace-heading{margin:0 0 15px}h2{font-size:19px}.pill{font-size:10px;padding:6px}.wall-wrap{height:350px;padding:20px}.arrangement-toolbar button{flex:1;font-size:11px}.launch-card{margin-top:14px}.inputs,input,select{font-size:16px!important}.library-list{grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}.quiet{font-size:13px}.check{font-size:14px}.detail-content label:not(.check){font-size:13px}.mobile-upload{display:block}}
+
+/* The editor belongs to the artwork window. Keep its tool row visible as one
+   compact, horizontally scrollable strip on narrow phones. */
+.studio{grid-template-columns:240px minmax(0,1fr)}
+.workspace{max-width:1080px;width:100%;margin:auto}
+.editor-tabs{display:flex;overflow-x:auto;scrollbar-width:thin;background:var(--panel);border:1px solid var(--border);border-bottom:0;border-radius:12px 12px 0 0;margin-top:16px}
+.editor-tabs button{flex:1 0 92px;min-height:62px;border:0;border-bottom:2px solid transparent;border-radius:0;background:transparent;color:var(--muted);font-size:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.editor-tabs button span{font-size:21px;line-height:1}
+.editor-tabs button[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent);background:var(--input)}
+.inspector.panel{border-radius:0 0 12px 12px;min-height:130px}
+.inspector .detail-content{padding:18px;max-width:700px}
+.inspector .arrangement-toolbar{margin-top:0}
+.library #camera{width:100%;margin-top:8px}
+.workspace-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.workspace-actions button{white-space:nowrap}
+@media(max-width:1050px){.studio{grid-template-columns:1fr}.library{grid-column:auto;grid-row:2}.workspace{grid-row:1}}
+@media(max-width:700px){.studio{display:flex}.workspace{order:0}.library{order:1}.wall-wrap{height:350px}.editor-tabs button{flex-basis:76px;min-height:56px;font-size:11px}.editor-tabs button span{font-size:19px}.inspector .detail-content{padding:16px}.piece-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.piece-tabs button{flex-shrink:0}.workspace-heading{align-items:flex-start}.workspace-actions{gap:5px}.workspace-actions button{min-height:34px;padding:5px 7px;font-size:11px}}

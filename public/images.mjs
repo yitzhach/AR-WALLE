@@ -1,4 +1,30 @@
 import {INITIAL_EDITS,LABEL_ASPECT,MAX_TEXTURE} from './state.mjs';
+export function isHEIF(bytes){
+ if(bytes.length<12||String.fromCharCode(...bytes.slice(4,8))!=='ftyp')return false;
+ const brands=String.fromCharCode(...bytes.slice(8,Math.min(bytes.length,64)));
+ return !/avif|avis/.test(brands)&&/heic|heix|hevc|hevx|heif|mif1|msf1/.test(brands);
+}
+// Safari can decode HEIC photos natively. USDZ only accepts JPEG/PNG textures,
+// so convert the selected photo locally; the source file on the phone is untouched.
+export async function prepareUpload(file){
+ const bytes=new Uint8Array(await file.slice(0,64).arrayBuffer());
+ if(!isHEIF(bytes))return {...await detectImage(file),converted:false};
+ let loaded;
+ try{
+  loaded=await loadImage(file);
+  const {naturalWidth:w,naturalHeight:h}=loaded.image;
+  if(!w||!h)throw Error('Empty image.');
+  const scale=Math.min(1,Math.sqrt(24000000/(w*h))),canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(w*scale));canvas.height=Math.max(1,Math.round(h*scale));
+  canvas.getContext('2d').drawImage(loaded.image,0,0,canvas.width,canvas.height);
+  const jpeg=await encode(canvas,'image/jpeg');
+  if(jpeg.size>15*1024*1024)throw Error('Converted photo exceeds 15 MB. Use a smaller photo.');
+  return {...await detectImage(jpeg),converted:true};
+ }catch(error){
+  if(error.message.includes('could not be decoded'))throw Error('This iPhone photo cannot be decoded by this browser. Choose it from Photos again, or export it as JPG.');
+  throw error;
+ }finally{if(loaded)URL.revokeObjectURL(loaded.url);}
+}
 export async function detectImage(blob){
  const bytes=new Uint8Array(await blob.slice(0,65536).arrayBuffer());let type;
  if(bytes[0]===255&&bytes[1]===216)type='image/jpeg';

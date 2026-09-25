@@ -1,6 +1,6 @@
 import {INITIAL_EDITS,INITIAL_SCENE,createPiece,layoutPieces,setDimension,setScaleOption,arFragment,validateRecord,fmt} from './state.mjs';
 import {saveMany,listSaved,trash,restore} from './storage.mjs';
-import {detectImage,loadImage,renderTexture,makeShadow,makeLabel} from './images.mjs';
+import {detectImage,prepareUpload,loadImage,renderTexture,makeShadow,makeLabel} from './images.mjs';
 import {build} from './model.mjs';
 const $=id=>document.getElementById(id),pieces=[],settings={...INITIAL_SCENE};
 let selected=null,saved=[],deleted=null,libraryURLs=[],cache=new Map(),generation=0,timer,arBlob,arURL,shadow,picking=false,theme='dark',libraryBusy=false;
@@ -12,6 +12,14 @@ const element=(tag,attrs={},text='')=>{const e=document.createElement(tag);for(c
 function setTheme(mode){theme=mode;document.documentElement.dataset.theme=theme;$('theme').textContent=theme==='dark'?'Light mode':'Dark mode';$('theme').setAttribute('aria-label',`Switch to ${theme==='dark'?'light':'dark'} mode`);try{localStorage.setItem('ar-walle-theme',theme)}catch{}}
 try{theme=localStorage.getItem('ar-walle-theme')==='light'?'light':'dark'}catch{}setTheme(theme);
 $('theme').addEventListener('click',()=>setTheme(theme==='dark'?'light':'dark'));
+const editorTabs=[...document.querySelectorAll('.editor-tabs [role="tab"]')];
+function showEditorTab(tab){
+ for(const item of editorTabs){const active=item===tab;item.setAttribute('aria-selected',String(active));item.tabIndex=active?0:-1;$(item.getAttribute('aria-controls')).hidden=!active;}
+}
+editorTabs.forEach((tab,index)=>{
+ tab.addEventListener('click',()=>showEditorTab(tab));
+ tab.addEventListener('keydown',event=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?editorTabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+editorTabs.length)%editorTabs.length;showEditorTab(editorTabs[next]);editorTabs[next].focus();});
+});
 function readScene(){for(const key of ['gap','wallWidth','wallHeight'])settings[key]=Number($(key).value);settings.layout=$('layout').value;for(const key of ['shadow','gallery','dimensions','wallGuide','resize'])settings[key]=$(key).checked;
  const locked=settings.dimensions||settings.wallGuide;if(locked){settings.resize=false;$('resize').checked=false;}
  $('scale-note').textContent=locked?'Measurements lock scale. Enable pinch resizing to hide measurements and resize in AR.':settings.resize?'Pinch enabled. Entered dimensions are the starting size; AR cannot report the final resized dimensions.':'True-size mode. Pinching is disabled; change dimensions here and relaunch.';
@@ -92,15 +100,18 @@ $('duplicate').addEventListener('click',()=>{try{const p=active();if(p){addPiece
 $('remove').addEventListener('click',()=>{const i=pieces.findIndex(p=>p.id===selected);if(i<0)return;const old=cache.get(selected);if(old)URL.revokeObjectURL(old.url);cache.delete(selected);pieces.splice(i,1);selected=pieces[Math.max(0,i-1)]?.id||null;picking=false;updateArrangement();});
 async function importFiles(files){
  if(files.length+pieces.length>8){notice('Add up to 8 pieces per arrangement. Remove a piece before uploading more.');return;}
- let added=0;const errors=[];for(const file of files){let loaded;try{
+ let added=0,converted=0;const errors=[];for(const file of files){let loaded;try{
   if(file.size>15*1024*1024)throw Error('Each artwork must be under 15 MB.');
   if(pieces.reduce((n,p)=>n+p.blob.size,0)+file.size>60*1024*1024)throw Error('Keep the arrangement’s source images under 60 MB total.');
-  const source=await detectImage(file);loaded=await loadImage(source.blob);const {naturalWidth:w,naturalHeight:h}=loaded.image;if(w*h>24000000)throw Error('Please use an image of 24 megapixels or less.');
+  const source=await prepareUpload(file);if(pieces.reduce((n,p)=>n+p.blob.size,0)+source.blob.size>60*1024*1024)throw Error('Keep the arrangement’s source images under 60 MB total.');loaded=await loadImage(source.blob);const {naturalWidth:w,naturalHeight:h}=loaded.image;if(w*h>24000000)throw Error('Please use an image of 24 megapixels or less.');
   const p=createPiece(uid(),file.name.replace(/\.[^.]+$/,'').slice(0,160),source.blob,w,h,source.normalize);addPiece(p);added++;
+  if(source.converted)converted++;
  }catch(e){errors.push(`${file.name}: ${e.message}`);}finally{if(loaded)URL.revokeObjectURL(loaded.url);}}
- updateArrangement();notice([added?`Added ${added} artwork${added===1?'':'s'}. Select a piece and save it to keep it in your library.`:'',...errors].filter(Boolean).join(' '));
+ updateArrangement();notice([added?`Added ${added} artwork${added===1?'':'s'}. Select a piece and save it to keep it in your library.`:'',converted?`Converted ${converted} iPhone photo${converted===1?'':'s'} to JPEG locally.`:'',...errors].filter(Boolean).join(' '));
 }
 $('upload').addEventListener('click',()=>$('files').click());$('files').addEventListener('change',async()=>{await importFiles([...$('files').files]);$('files').value='';});
+$('quick-upload').addEventListener('click',()=>$('files').click());
+$('camera').addEventListener('click',()=>$('camera-file').click());$('camera-file').addEventListener('change',async()=>{await importFiles([...$('camera-file').files]);$('camera-file').value='';});
 function recordFromPiece(p,id){return {id,name:p.name,blob:p.blob,pixelWidth:p.pixelWidth,pixelHeight:p.pixelHeight,normalize:p.normalize,width:p.width,height:p.height,depth:p.depth,color:p.color,aspect:p.aspect,ratio:p.ratio,edits:{...p.edits},updatedAt:Date.now(),trashed:false};}
 async function refreshLibrary(){saved=await listSaved();libraryURLs.forEach(URL.revokeObjectURL);libraryURLs=[];const root=$('library-list');root.replaceChildren();$('saved-count').textContent=`${saved.length} saved`;
  if(!saved.length){root.append(element('p',{class:'quiet'},'Save your first artwork to reuse it in another arrangement.'));return;}

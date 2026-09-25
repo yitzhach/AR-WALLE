@@ -7,8 +7,10 @@
 - **Upload defaults:** longest edge starts at 48 inches, preserving proportions; actual physical dimensions must be entered by the user.
 - **Mount:** default thickness 3.5 in, rear 0.5 in from wall. Optional alpha-textured shadow behind panel gives soft side/bottom separation. It is a visual approximation, not a light simulation.
 - **Originals and edits:** original image bytes are preserved. Latest user request explicitly authorizes non-AI edits and unlocked proportions. Derivatives are generated only for edits, gallery simulation or EXIF normalization; no AI generation/manipulation.
+- **iPhone photos:** JPG/PNG originals remain unchanged. Browser-decodable HEIC/HEIF is converted locally to JPEG before import because USDZ textures and the existing library schema use JPEG/PNG. The original stays in Photos, but library backups contain the JPEG conversion. A separate camera input requests the rear camera.
+- **Editor navigation:** five bottom tabs below the wall preview group artwork, image, display, wall and arrangement settings. Only the active settings panel is shown.
 - **Gallery lighting:** simple reversible spotlight on the derivative plus Apple preferred IBL version 2. No promise of real gallery luminaires or paint-relief reconstruction.
 - **Multi-piece:** up to eight pieces share one USDZ and native placement transform. Row/column/grid spacing is configured before launch.
 - **Library:** browser IndexedDB with explicit save, soft delete/undo and JSON backup. No accounts or cloud persistence. Whole scene persistence is outside this iteration.
-- **Measurements:** entered wall dimensions drive a reference guide, not AR calibration. Native Quick Look cannot report the final pinched size or composited screenshot to this webpage.
+- **Measurements:** entered wall dimensions drive a reference guide, not AR calibration. Native Quick Look cannot report the final pinched size or composited screenshot to this webpage; its percentage display cannot be replaced with live inches or held for two seconds after the gesture.
 - **Hosting:** user requested GitHub main and will connect Cloudflare. Serve only build output dist; previous Sites deployment is not the new source of truth.
