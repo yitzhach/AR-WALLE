@@ -21,3 +21,9 @@
 .workspace-actions button{white-space:nowrap}
 @media(max-width:1050px){.studio{grid-template-columns:1fr}.library{grid-column:auto;grid-row:2}.workspace{grid-row:1}}
 @media(max-width:700px){.studio{display:flex}.workspace{order:0}.library{order:1}.wall-wrap{height:350px}.editor-tabs button{flex-basis:76px;min-height:56px;font-size:11px}.editor-tabs button span{font-size:19px}.inspector .detail-content{padding:16px}.piece-tabs{flex-wrap:nowrap;overflow-x:auto;padding-bottom:4px}.piece-tabs button{flex-shrink:0}.workspace-heading{align-items:flex-start}.workspace-actions{gap:5px}.workspace-actions button{min-height:34px;padding:5px 7px;font-size:11px}}
+
+/* Keep the artwork in view while the image controls scroll independently. */
+.image-editing .preview-stage{position:sticky;top:0;z-index:3;background:var(--bg);padding-bottom:2px}
+#panel-image{max-height:min(48dvh,460px);overflow-y:auto;overscroll-behavior:contain}
+#panel-image .detail-content{max-width:none}
+@media(max-width:700px){.image-editing .wall-wrap{height:clamp(190px,30dvh,300px)}.image-editing .launch-card{padding:9px;gap:4px;margin-top:6px}.image-editing .launch img{height:44px}.image-editing .launch-card>div{display:none}#panel-image{max-height:max(160px,30dvh)}}

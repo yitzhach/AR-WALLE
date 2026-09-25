@@ -53,7 +53,12 @@ export function scene(pieces,settings){
    [[r,b,back],[r,t,back],[r,t,front],[r,b,front]]],`Side${i}`));
   mats.push(material(`Image${i}`,[1,1,1],`art${i}.${p.extension||'jpeg'}`));
   mats.push(material(`Side${i}`,[1,3,5].map(c=>linear(parseInt(p.color.slice(c,c+2),16)))));
-  if(settings.shadow){const pad=Math.max(.7*M,Math.min(p.width,p.height)*M*.045),dx=.45*M,dy=-.6*M;geometries.push(quad(`Shadow${i}`,l-pad+dx,b-pad+dy,r+pad+dx,t+pad+dy,.0002,'Shadow'));}
+  if(settings.shadow){
+   // Keep the shadow inside the half-inch mounting gap, forward of the wall.
+   // Its soft perimeter extends visibly below and to the right of the panel.
+   const pad=Math.max(2*M,Math.min(p.width,p.height)*M*.08),dx=1*M,dy=-1.25*M;
+   geometries.push(quad(`Shadow${i}`,l-pad+dx,b-pad+dy,r+pad+dx,t+pad+dy,.25*M,'Shadow'));
+  }
   if(settings.dimensions){const width=Math.min(p.width,2.4*LABEL_ASPECT)*M,top=b-.6*M;geometries.push(quad(`Label${i}`,p.x*M-width/2,top-width/LABEL_ASPECT,p.x*M+width/2,top,front,`Label${i}`));mats.push(material(`Label${i}`,[1,1,1],`label${i}.png`,true));}
  });
  if(settings.shadow)mats.push(material('Shadow',[0,0,0],'shadow.png',true));

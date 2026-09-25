@@ -7,10 +7,10 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 
 ## Now
 - Source of truth: https://github.com/yitzhach/AR-WALLE, branch `main`.
-- Continued main from `2bfd929`; this update adds iPhone photo intake and bottom editor tabs.
+- Continued main from `6f040ec`; this update improves saving, controls and shadows.
 - Cloudflare deployment is unverified; no live Cloudflare URL was supplied here.
 - User confirmed native pinch works on iPhone. Physical scale, reset and shadows remain unverified.
-- This update: 14/14 Node tests and production build pass.
+- This update: 15/15 Node tests and production build pass.
 - Browser retest blocked: Chromium unavailable.
 
 ## Done
@@ -25,6 +25,11 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 - Panorama default fixed: 48-inch longest edge; 6:1 uploads start at 48 × 8 inches.
 - Photos/camera accept JPG/PNG and browser-decodable HEIC/HEIF; HEIC converts
   locally to JPEG (phone source untouched). Five bottom editor tabs support keyboard use.
+- New uploads auto-save to the local library. Editing still requires Save artwork changes;
+  prior unsaved uploads can be saved manually. Remove selected is also on Artwork.
+- VIEW ON MY WALL sits directly below the preview; Image controls scroll while
+  the preview and launch button remain visible. Shadow perimeter and projection
+  are enlarged and the AR shadow sits within the half-inch mounting gap.
 - Labels preserve 8:1 ratio; art opaque; textures capped at 4096 pixels.
   JPEG/PNG originals retained; imported HEIC is saved as JPEG. Prior OpenUSD passed.
 - Browser checks covered sizing, duplication, themes, save/reload and scale-lock UI.
@@ -46,15 +51,17 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 ## Next
 1. Fetch current main; read README/DECISIONS; preserve newer work.
 2. On iPhone Safari, test a camera photo and a native HEIC from Photos, including
-   orientation, dimensions, saved library, backup and AR texture. Test the new
-   bottom tabs and upload picker at narrow phone widths.
+   orientation, auto-save in library, save after edits, backup and AR texture.
+   Existing photos from before this update need a manual Save artwork changes.
+   Check Remove selected, tabs, sticky image preview and upload picker on narrow phones.
 3. Test image edits, export USDZ, library save/reload, backup/restore and
    mobile layout. Investigate failures; add focused regression tests.
 4. Confirm Cloudflare URL/settings with user if not available. Pages: branch main,
    root repository, build `npm run build`, output `dist`. Workers alternative:
    build `npm run build`, deploy `npx wrangler deploy`. Serve dist only.
 5. Run README iPhone checklist: orientation, wall placement, measured scale,
-   depth/gap, texture, lighting, drift, diptychs, scale lock and reset.
+   depth/gap, shadow visibility and toggle in AR, texture, lighting, drift,
+   diptychs, scale lock and reset.
    Use native screenshots; no webpage capture API.
 
 ## A–F / Backlog

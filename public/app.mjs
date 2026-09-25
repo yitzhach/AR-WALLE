@@ -15,6 +15,7 @@ $('theme').addEventListener('click',()=>setTheme(theme==='dark'?'light':'dark'))
 const editorTabs=[...document.querySelectorAll('.editor-tabs [role="tab"]')];
 function showEditorTab(tab){
  for(const item of editorTabs){const active=item===tab;item.setAttribute('aria-selected',String(active));item.tabIndex=active?0:-1;$(item.getAttribute('aria-controls')).hidden=!active;}
+ document.querySelector('.workspace').classList.toggle('image-editing',tab.id==='tab-image');
 }
 editorTabs.forEach((tab,index)=>{
  tab.addEventListener('click',()=>showEditorTab(tab));
@@ -60,7 +61,7 @@ function paintPreview(){
  $('wall-caption').textContent=`Wall reference · ${fmt(settings.wallWidth)} × ${fmt(settings.wallHeight)} in`;
  layout.items.forEach(p=>{
   const tx=cache.get(p.id),button=element('button',{class:`wall-piece${p.id===selected?' selected':''}${picking&&p.id===selected?' picking':''}`,'aria-label':`Select ${p.name}`});
-  Object.assign(button.style,{width:p.width*scale+'px',height:p.height*scale+'px',left:(settings.wallWidth/2+p.x)*scale+'px',top:(settings.wallHeight/2-p.y)*scale+'px',boxShadow:settings.shadow?`${Math.max(3,p.depth*scale*.3)}px ${Math.max(5,p.depth*scale*.5)}px ${Math.max(8,scale*1.4)}px #0007`:'none',borderRight:`${Math.min(8,p.depth*scale*.25)}px solid ${p.color}`,boxSizing:'content-box'});
+  Object.assign(button.style,{width:p.width*scale+'px',height:p.height*scale+'px',left:(settings.wallWidth/2+p.x)*scale+'px',top:(settings.wallHeight/2-p.y)*scale+'px',boxShadow:settings.shadow?`${Math.max(4,scale)}px ${Math.max(5,scale*1.25)}px ${Math.max(12,scale*2.5)}px ${Math.max(2,scale*.5)}px #0008`:'none',borderRight:`${Math.min(8,p.depth*scale*.25)}px solid ${p.color}`,boxSizing:'content-box'});
   if(tx){const img=element('img',{src:tx.url,alt:p.name,draggable:'false'});button.append(img);}
   if(settings.dimensions)button.append(element('span',{class:'dimension-tag'},`${fmt(p.width)} × ${fmt(p.height)} in`));
   button.addEventListener('click',e=>{if(picking&&p.id===selected){sample(e,button,p);return;}selected=p.id;syncInspector();paintPreview();renderTabs();});container.append(button);
@@ -69,7 +70,7 @@ function paintPreview(){
 }
 function sample(e,button,p){const tx=cache.get(p.id);if(!tx)return;try{const img=button.querySelector('img'),r=img.getBoundingClientRect(),c=document.createElement('canvas');c.width=tx.image.naturalWidth;c.height=tx.image.naturalHeight;const ctx=c.getContext('2d',{willReadFrequently:true});ctx.drawImage(tx.image,0,0);const x=Math.max(0,Math.min(c.width-1,Math.floor((e.clientX-r.left)/r.width*c.width))),y=Math.max(0,Math.min(c.height-1,Math.floor((e.clientY-r.top)/r.height*c.height)));const rgb=ctx.getImageData(x,y,1,1).data;p.color='#'+Array.from(rgb).slice(0,3).map(v=>v.toString(16).padStart(2,'0')).join('');picking=false;syncInspector();invalidate();notice('Side color sampled from the artwork.');}catch{notice('Could not sample this image. Use the side color picker instead.');}}
 function renderTabs(){const root=$('piece-tabs');root.replaceChildren();pieces.forEach((p,i)=>{const b=element('button',{'aria-pressed':String(p.id===selected)},`${i+1} · ${p.name}`);b.addEventListener('click',()=>{selected=p.id;syncInspector();renderTabs();paintPreview();});root.append(b);});}
-function syncInspector(){const p=active();for(const id of ['name','width','height','depth','color','aspect','save','eyedropper','duplicate','remove','flipH','flipV','reset-edits'])$(id).disabled=!p;
+function syncInspector(){const p=active();for(const id of ['name','width','height','depth','color','aspect','save','eyedropper','duplicate','remove','remove-artwork','flipH','flipV','reset-edits'])$(id).disabled=!p;
  if(!p)return;for(const k of ['name','width','height','depth','color'])$(k).value=typeof p[k]==='number'?Number(p[k].toFixed(6)):p[k];$('aspect').checked=p.aspect;
  $('aspect-note').textContent=p.aspect?'Current proportions stay linked.':'Width and height are independent; the artwork will stretch.';
  for(const k of Object.keys(INITIAL_EDITS)){if(k.startsWith('flip'))$(k).setAttribute('aria-pressed',String(p.edits[k]));else{$(k).value=p.edits[k];$(`${k}-value`).textContent=p.edits[k];}}
@@ -97,17 +98,27 @@ $('download').addEventListener('click',()=>{if(arBlob)download(arBlob,'ar-walle.
 function addPiece(record){if(pieces.length>=8)throw Error('An arrangement can contain up to 8 pieces.');const p={...record,id:uid(),libraryId:record.libraryId||null,edits:{...record.edits}};pieces.push(p);selected=p.id;return p;}
 function updateArrangement(){syncInspector();renderTabs();invalidate();}
 $('duplicate').addEventListener('click',()=>{try{const p=active();if(p){addPiece({...p,libraryId:null,name:p.name+' · copy'});updateArrangement();}}catch(e){notice(e.message)}});
-$('remove').addEventListener('click',()=>{const i=pieces.findIndex(p=>p.id===selected);if(i<0)return;const old=cache.get(selected);if(old)URL.revokeObjectURL(old.url);cache.delete(selected);pieces.splice(i,1);selected=pieces[Math.max(0,i-1)]?.id||null;picking=false;updateArrangement();});
+function removeSelected(){const i=pieces.findIndex(p=>p.id===selected);if(i<0)return;const old=cache.get(selected);if(old)URL.revokeObjectURL(old.url);cache.delete(selected);pieces.splice(i,1);selected=pieces[Math.max(0,i-1)]?.id||null;picking=false;updateArrangement();notice('Removed from this arrangement. A saved library copy is still available below.');}
+for(const id of ['remove','remove-artwork'])$(id).addEventListener('click',removeSelected);
 async function importFiles(files){
  if(files.length+pieces.length>8){notice('Add up to 8 pieces per arrangement. Remove a piece before uploading more.');return;}
- let added=0,converted=0;const errors=[];for(const file of files){let loaded;try{
+ let added=0,converted=0;const errors=[],imported=[];for(const file of files){let loaded;try{
   if(file.size>15*1024*1024)throw Error('Each artwork must be under 15 MB.');
   if(pieces.reduce((n,p)=>n+p.blob.size,0)+file.size>60*1024*1024)throw Error('Keep the arrangement’s source images under 60 MB total.');
   const source=await prepareUpload(file);if(pieces.reduce((n,p)=>n+p.blob.size,0)+source.blob.size>60*1024*1024)throw Error('Keep the arrangement’s source images under 60 MB total.');loaded=await loadImage(source.blob);const {naturalWidth:w,naturalHeight:h}=loaded.image;if(w*h>24000000)throw Error('Please use an image of 24 megapixels or less.');
-  const p=createPiece(uid(),file.name.replace(/\.[^.]+$/,'').slice(0,160),source.blob,w,h,source.normalize);addPiece(p);added++;
+  const p=createPiece(uid(),file.name.replace(/\.[^.]+$/,'').slice(0,160),source.blob,w,h,source.normalize);imported.push(addPiece(p));added++;
   if(source.converted)converted++;
  }catch(e){errors.push(`${file.name}: ${e.message}`);}finally{if(loaded)URL.revokeObjectURL(loaded.url);}}
- updateArrangement();notice([added?`Added ${added} artwork${added===1?'':'s'}. Select a piece and save it to keep it in your library.`:'',converted?`Converted ${converted} iPhone photo${converted===1?'':'s'} to JPEG locally.`:'',...errors].filter(Boolean).join(' '));
+ updateArrangement();
+ let savedCount=0;
+ if(imported.length){try{
+  const records=imported.map(p=>validateRecord(recordFromPiece(p,uid())));
+  await saveMany(records);
+  imported.forEach((p,i)=>p.libraryId=records[i].id);
+  savedCount=records.length;
+  await refreshLibrary();
+ }catch(e){errors.push(`Could not save to the library: ${e.message}. The artwork remains on the wall; use Save artwork changes to retry.`);}}
+ notice([savedCount?`Added and saved ${savedCount} artwork${savedCount===1?'':'s'} to this browser's library.`:added?`Added ${added} artwork${added===1?'':'s'} to the wall.`:'',converted?`Converted ${converted} iPhone photo${converted===1?'':'s'} to JPEG locally.`:'',...errors].filter(Boolean).join(' '));
 }
 $('upload').addEventListener('click',()=>$('files').click());$('files').addEventListener('change',async()=>{await importFiles([...$('files').files]);$('files').value='';});
 $('quick-upload').addEventListener('click',()=>$('files').click());

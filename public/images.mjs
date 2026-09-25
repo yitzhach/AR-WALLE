@@ -83,9 +83,10 @@ export async function renderTexture(piece,gallery=false){
 }
 export async function makeShadow(){
  const c=document.createElement('canvas');c.width=c.height=256;const ctx=c.getContext('2d');
- // Smooth analytic rectangle falloff, strongest behind the panel, soft at edges.
+ // Wide soft edge; the previous 25-pixel falloff was almost entirely hidden
+ // behind the panel, making the AR shadow appear absent.
  const p=ctx.createImageData(256,256);
- for(let y=0;y<256;y++)for(let x=0;x<256;x++){const dx=Math.max(25-x,0,x-231),dy=Math.max(25-y,0,y-231),i=(y*256+x)*4;p.data[i+3]=Math.round(142*Math.exp(-(dx*dx+dy*dy)/155));}
+ for(let y=0;y<256;y++)for(let x=0;x<256;x++){const dx=Math.max(58-x,0,x-197),dy=Math.max(58-y,0,y-197),i=(y*256+x)*4;p.data[i+3]=Math.round(165*Math.exp(-(dx*dx+dy*dy)/750));}
  ctx.putImageData(p,0,0);return new Uint8Array(await(await png(c)).arrayBuffer());
 }
 export async function makeLabel(text){

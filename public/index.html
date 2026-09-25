@@ -15,7 +15,12 @@
  </aside>
  <section class="workspace" aria-label="Wall arrangement">
   <div class="workspace-heading"><div><p class="eyebrow">WALL PREVIEW</p><h2 id="arrangement-title">Your arrangement</h2></div><div class="workspace-actions"><span id="total-size" class="pill"></span><button id="quick-upload">＋ Add photo</button></div></div>
-  <div class="wall-wrap"><div id="wall" class="wall" aria-label="Artwork arrangement preview"><div id="wall-guide" hidden></div><div id="wall-art"></div><span id="wall-caption"></span></div></div>
+  <div class="preview-stage"><div class="wall-wrap"><div id="wall" class="wall" aria-label="Artwork arrangement preview"><div id="wall-guide" hidden></div><div id="wall-art"></div><span id="wall-caption"></span></div></div>
+  <div class="launch-card">
+   <a id="launch" class="launch" rel="ar" aria-disabled="true" aria-label="View arrangement on my wall"><img src="button.svg" alt="VIEW ON MY WALL" width="320" height="56"></a>
+   <div><p id="ar-status" role="status">Loading artwork…</p><button id="reset-ar">Reset AR to entered size</button><button id="download" disabled>Download USDZ</button></div>
+  </div>
+  </div>
   <div id="piece-tabs" class="piece-tabs" aria-label="Pieces in arrangement"></div>
   <nav class="editor-tabs" role="tablist" aria-label="Editor tools">
    <button role="tab" id="tab-artwork" aria-controls="panel-artwork" aria-selected="true"><span aria-hidden="true">▣</span>Artwork</button>
@@ -31,7 +36,8 @@
    <label class="check"><input id="aspect" type="checkbox" checked>Lock aspect ratio</label><p id="aspect-note" class="quiet">Original proportions stay linked.</p>
    <div class="fields"><label>Thickness (in)<input id="depth" type="number" min="0.05" max="12" step="0.05" value="3.5"></label><label>Side color<input id="color" type="color" value="#747474"></label></div>
    <button id="eyedropper" aria-pressed="false">Pick side color from artwork</button><p class="quiet">Float mount · ½ inch off the wall.</p>
-   <button id="save" class="primary">Save artwork to library</button>
+   <button id="save" class="primary">Save artwork changes</button>
+   <button id="remove-artwork">Remove selected</button>
   </div></section>
   <section role="tabpanel" id="panel-image" aria-labelledby="tab-image" hidden><div class="detail-content"><p class="quiet">Edits use a preview copy. Your original is preserved.</p><div id="sliders"></div><div class="fields"><button id="flipH" aria-pressed="false">Flip horizontal</button><button id="flipV" aria-pressed="false">Flip vertical</button></div><button id="reset-edits">Reset image edits</button></div></section>
   <section role="tabpanel" id="panel-display" aria-labelledby="tab-display" hidden><div class="detail-content">
@@ -44,10 +50,6 @@
   <section role="tabpanel" id="panel-arrange" aria-labelledby="tab-arrange" hidden><div class="detail-content"><div class="arrangement-toolbar"><label>Layout<select id="layout"><option value="row">Side by side</option><option value="column">Vertical</option><option value="grid">Grid · 2 columns</option></select></label><label>Gap (in)<input id="gap" type="number" min="0" max="60" step="0.5" value="3"></label><button id="duplicate">Duplicate selected</button><button id="remove">Remove selected</button></div></div></section>
   </div>
   <p id="preview-note" class="quiet">Select an artwork to edit it. The wall preview is a size reference.</p>
-  <div class="launch-card">
-   <a id="launch" class="launch" rel="ar" aria-disabled="true" aria-label="View arrangement on my wall"><img src="button.svg" alt="VIEW ON MY WALL" width="320" height="56"></a>
-   <div><p id="ar-status" role="status">Loading artwork…</p><button id="reset-ar">Reset AR to entered size</button><button id="download" disabled>Download USDZ</button></div>
-  </div>
   <p id="message" class="message" role="status" aria-live="polite"></p>
  </section>
 

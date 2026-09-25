@@ -25,6 +25,15 @@ test('USDZ entries are uncompressed, aligned and preserve original texture',asyn
 const quadSize=(usd,name)=>{const pts=usd.match(new RegExp(`def Mesh "${name}"[\\s\\S]*?points = \\[([^\\]]+)\\]`))[1].match(/\([^)]+\)/g).map(p=>p.slice(1,-1).split(',').map(Number));return [Math.abs(pts[1][0]-pts[0][0]),Math.abs(pts[2][2]-pts[1][2])];};
 test('AR labels keep the label texture aspect ratio at any artwork or wall size',()=>{for(const width of [6,10,19.2,48,200])for(const wallWidth of [12,40,120,600]){const usd=scene([{...piece(),width,aspect:false}],{...INITIAL_SCENE,dimensions:true,wallGuide:true,wallWidth});for(const name of ['Label0','WallLabel']){const [w,h]=quadSize(usd,name);assert.ok(Math.abs(w/h-LABEL_ASPECT)<1e-9,`${name} ${width}/${wallWidth}: ${w/h}`);}}});
 test('artwork is opaque; only overlays use texture alpha',()=>{const usd=scene([piece()],{...INITIAL_SCENE,dimensions:true});const image=usd.match(/def Material "Image0"[\s\S]*?def Shader "UV"/)[0];assert.doesNotMatch(image,/inputs:opacity/);assert.match(usd.match(/def Material "Label0"[\s\S]*?def Shader "UV"/)[0],/inputs:opacity.connect/);assert.match(usd.match(/def Material "Shadow"[\s\S]*?def Shader "UV"/)[0],/inputs:opacity.connect/);});
+test('shadow projects beyond artwork while staying inside the half-inch mounting gap',()=>{
+ const usd=scene([piece()],INITIAL_SCENE);
+ const points=name=>usd.match(new RegExp(`def Mesh "${name}"[\\s\\S]*?points = \\[([^\\]]+)\\]`))[1].match(/\([^)]+\)/g).map(v=>v.slice(1,-1).split(',').map(Number));
+ const front=points('Front0'),shadow=points('Shadow0');
+ assert.ok(Math.max(...shadow.map(p=>p[0]))>Math.max(...front.map(p=>p[0])));
+ assert.ok(Math.min(...shadow.map(p=>p[2]))<Math.min(...front.map(p=>p[2])));
+ assert.ok(shadow.every(p=>p[1]>0&&p[1]<.0127));
+ assert.doesNotMatch(scene([piece()],{...INITIAL_SCENE,shadow:false}),/def Mesh "Shadow0"/);
+});
 test('AR textures are capped on the long edge and keep proportions',()=>{assert.deepEqual(textureSize(962,2047),[962,2047]);assert.deepEqual(textureSize(12000,2000),[MAX_TEXTURE,683]);assert.deepEqual(textureSize(3000,6000),[2048,MAX_TEXTURE]);assert.deepEqual(textureSize(MAX_TEXTURE,10),[MAX_TEXTURE,10]);});
 
 test('panorama and portrait uploads start with a 48-inch longest edge',()=>{
