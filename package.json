@@ -1,0 +1,13 @@
+{
+  "name": "ar-walle",
+  "private": true,
+  "version": "0.4.0",
+  "type": "module",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "test": "node --test tests/core.test.mjs",
+    "dev": "node scripts/serve.mjs",
+    "deploy": "npx wrangler deploy"
+  },
+  "engines": {"node": ">=18"}
+}
