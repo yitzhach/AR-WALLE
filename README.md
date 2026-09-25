@@ -1,0 +1,75 @@
+# AR WALLE
+
+A small static artwork studio using Apple AR Quick Look and locally generated USDZ. No account, upload server, AI, framework, or runtime dependencies.
+
+## Run
+
+Node 18+:
+
+```sh
+npm test
+npm run dev
+npm run build
+```
+
+Open http://localhost:4173. Build output is `dist/`.
+
+## Cloudflare
+
+Connect `yitzhach/AR-WALLE`, branch `main`, repository root.
+
+- **Pages:** framework None; build `npm run build`; output `dist`.
+- **Workers static assets:** build `npm run build`; deploy `npx wrangler deploy`. The included `wrangler.jsonc` serves only `dist/`.
+
+Use HTTPS on the deployed site. No secrets or backend configuration are needed. Cloudflare has not been connected or deployed by this change.
+
+## Use
+
+Upload JPG/PNG, select a piece, enter its actual dimensions in inches, then tap VIEW ON MY WALL in iPhone Safari. The bundled artwork's real dimensions are unknown; its initial 48-inch height is only a starting value. Aspect lock preserves proportions. Unlocking explicitly stretches the displayed image to the entered rectangle; it does not crop or overwrite the source.
+
+New paintings default to 3.5-inch thickness and a half-inch mounting gap. Side color can be sampled from the artwork preview. Drop shadows default on. Upload up to eight images and arrange them side by side, vertically, or in a two-column grid. An arrangement moves/scales as one AR object; pieces are positioned relative to each other on the webpage.
+
+Pinch resizing is enabled by default in this expanded editor. Turn it off for true-size placement. Dimension labels or the wall guide automatically lock scaling so their measurements remain valid. Quick Look does not return the final pinched dimensions to this webpage. If a prior AR session looks too large, close it, enter dimensions here, use Reset AR to entered size, and relaunch. A fresh Blob URL is created for each launch; iPhone verification of this mitigation remains necessary.
+
+The optional measured wall reference is a visual comparison, not camera calibration. Gallery lighting is a deterministic spotlight simulation applied to a preview texture; it is not a physical spotlight or inferred paint relief. The optional soft shadow is a textured plane behind the panel, offset sideways/downward. Native AR lighting and shadows may differ from the webpage.
+
+Brightness, contrast, saturation, highlights, shadows, hue, warmth and flips operate on a derivative. Originals remain stored unchanged. Unedited, normally oriented images are embedded byte-for-byte in USDZ. Edited/gallery/EXIF-normalized derivatives use canvas PNG, maximum 2048 pixels on the long edge. Native rendering/color management can affect apparent color.
+
+## Saved library
+
+Save each artwork explicitly. IndexedDB stores its original, dimensions, side color and image edits on this browser and origin. Arrangements and scene lighting settings are not saved. Export/import library JSON provides a portable backup. Removal is soft deletion with an Undo option for the most recent removal. Clearing browser data, private browsing, or changing domains can lose access to saves; export first. This is not cloud synchronization.
+
+Input limits: JPG/PNG only, 15 MB per file, 24 megapixels, eight pieces, 60 MB combined uploaded originals; generated USDZ capped at 100 MB. HEIC/WebP need conversion before upload.
+
+## Verification
+
+Eight Node tests cover units, layout, aspect ratios, scale locking, input validation, deterministic adjustments, original bytes and ZIP alignment. An exported 48 × 60-inch USDZ was also parsed with OpenUSD and its geometry, texture bytes and CRC verified. Browser checks covered page load, dark/light controls, manual sizes, duplication, scale-lock UI, library save and persistence after reload. The automated browser upload/download check stalled; upload/export/restore and mobile layout need a manual smoke test. No physical iPhone AR validation is claimed.
+
+Optional package validation:
+
+```sh
+python -m pip install usd-core
+python scripts/validate-usdz.py path/to/artwork.usdz
+```
+
+### Required iPhone acceptance test
+
+1. Open the HTTPS site in Safari on a modern AR-capable iPhone; record iPhone/iOS version.
+2. Upload an original, enter known 48 × 60 in dimensions (unlock aspect only when intentionally changing proportions). Thickness 3.5 in; shadow on.
+3. Disable pinch; launch Quick Look, choose AR if needed, scan a normal indoor wall. Confirm front is upright and parallel to the wall, not perpendicular or lying on a table.
+4. Compare against tape marks 48 in apart horizontally and 60 in vertically. Check depth, approximate half-inch wall separation, front image orientation/quality, side color and shadow below/to the side.
+5. Repeat in portrait/landscape, on blank and visually featured walls, at near and farther viewing distances. Reposition and walk sideways; note drift, flicker, lighting and occlusion.
+6. Close AR, enable pinch with labels/guide off, relaunch and verify pinch responds. Reset/relaunch and confirm entered size returns. Labels/guide on must prevent arbitrary scaling.
+7. Try two different uploads as a diptych; verify spacing, both textures and one-object movement. Test image edits/flips, eyedropper, library save/reload/remove/undo and backup/restore.
+8. Capture using native Quick Look controls where available or iPhone screenshots. The webpage has no API for the composited camera image or custom SAVE IMAGE button.
+
+Do not call Phase 1 physically validated until this checklist passes. Desktop/non-AR browsers offer editing and USDZ download with an iPhone Safari fallback message.
+
+## Apple references
+
+- https://developer.apple.com/augmented-reality/quick-look/
+- https://developer.apple.com/documentation/arkit/adding-an-apple-pay-button-or-a-custom-action-in-ar-quick-look
+- https://developer.apple.com/documentation/arkit/specifying-a-lighting-environment-in-ar-quick-look
+- https://webkit.org/blog/8421/viewing-augmented-reality-assets-in-safari-for-ios/
+
+Launch uses an `a[rel=ar]` with a direct image child and a USDZ Blob URL. `#allowsContentScaling=0` requests native scale locking. USD stage uses meter units and Apple's vertical-plane anchoring metadata. Camera tracking, plane detection and placement remain native to Quick Look.
