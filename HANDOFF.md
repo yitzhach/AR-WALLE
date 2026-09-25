@@ -1,64 +1,85 @@
 # AR WALLE — handoff
+Updated 2026-09-25. Read this first to continue without repeating prior work.
 
 ## Goal
-Place uploaded artwork at entered physical dimensions on iPhone walls using Apple AR Quick Look and USDZ generated in the browser. Static site, no backend, no AI.
+Place uploaded artwork at entered physical dimensions on iPhone walls using
+Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backend.
 
-## State
-- Repo: https://github.com/yitzhach/AR-WALLE. Working branch `claude/clever-gauss-d9yxje` (not yet merged to `main`, no PR opened).
-- `npm test` passes 11/11; `npm run build` passes; exported USDZs pass `scripts/validate-usdz.py` (OpenUSD).
-- Not done yet: Cloudflare deploy, physical iPhone acceptance test (README checklist). Do not claim true-scale or wall placement is validated.
+## Now
+- Source of truth: https://github.com/yitzhach/AR-WALLE, branch `main`.
+- Latest inspected main before this documentation update: `87f7cfba949059cfac462ba3900690ff4d1db93d`.
+- Newer label/texture fixes ARE present on main. The previous handoff's claim
+  that work existed only on `claude/clever-gauss-d9yxje` was stale.
+- Cloudflare deployment is unverified; no live Cloudflare URL was supplied here.
+- Real iPhone wall placement, physical scale, pinch/reset and shadows remain unverified.
+- This update changes documentation only; tests were not rerun for this update.
 
-## Done in the last session (review section 1)
-- AR dimension and wall-reference labels now keep the 8:1 label texture ratio (`LABEL_ASPECT` in `state.mjs`), so text is no longer distorted.
-- Artwork material no longer uses texture alpha for opacity; only the shadow and labels do.
-- All AR textures are capped at 4096 px on the long edge (`MAX_TEXTURE`); library originals are unchanged.
-- Edited, gallery-lit and EXIF-normalized textures use the same 4096 cap (was 2048). Photos are saved as JPEG at 0.92, PNG sources stay PNG. The per-pixel pass is skipped when only a flip or resize is needed.
-- Tests added for label aspect, artwork opacity and texture caps.
+## Done
+- Dark default/light toggle; original artwork sample; JPG/PNG uploads.
+- Up to 8 pieces, row/column/grid arrangements, spacing and duplication.
+- Manual inch dimensions/aspect lock; 3.5-inch default thickness; side-color eyedropper.
+- Default shadow on, soft side/bottom shadow, 0.5-inch modeled rear mounting gap.
+- Non-AI image adjustments/flips; optional simulated gallery lighting.
+- Browser-local saved library, portable backup/import, soft removal/undo.
+- AR dimensions and measured-wall guide; pinch mode and reset to entered size.
+- Latest main: labels preserve 8:1 ratio; art material opaque; textures capped at
+  4096 pixels; originals unchanged in library; derivatives JPEG .92 or PNG.
+- Prior session reports 11/11 tests, build and OpenUSD validation passing.
+- Browser checks covered sizing, duplication, themes, save/reload and scale-lock UI.
+  Upload/download automation stalled; do not claim those workflows passed.
 
-## Next, in priority order
+## Decisions
+- Keep Quick Look/USDZ. No custom tracking, Android AR engine or native app.
+- Meter units; inches × .0254. Anchor-local XZ; front normal +Y; image top -Z.
+- Latest user authorized image edits and unlocked proportions; preserve originals.
+- Pinch defaults on. Labels or wall guide force scale lock; turn pinch off for
+  true-size placement. Quick Look cannot report final pinched dimensions to the page.
+- Multiple artworks move as one AR object. Wall guide is not camera calibration.
+- Lighting/shadow effects are approximations, not paint-relief reconstruction.
+- Library is browser/domain-local. Export before changing domain/clearing storage.
+- Sample's actual dimensions are unknown; initial 48-inch height is illustrative.
+- User authorized fixes and pushing completed work to main; user plans Cloudflare setup.
 
-### A. Open bug (small, needs owner OK because it changes a documented default)
-- `createPiece` (`state.mjs`) always defaults to 48 in tall. A panorama (e.g. 6:1) starts at 288 in wide, over the 240 in limit, so AR stays disabled until the user edits the size. Fix: set the longest edge to 48 in. Update README "initial 48-inch height" wording. This is also why automated upload tests previously looked like they "stalled".
+## Next
+1. Fetch current main; read README/DECISIONS. Preserve any newer work.
+2. Fix confirmed panorama default bug: 48-inch height makes a 6:1 upload 288 inches
+   wide, exceeding the 240-inch limit. Prefer longest edge 48 inches; update README
+   and test. This is a routine valid-default fix, not a change to the project goal.
+   Do not assume this caused the earlier stalled file automation; that is unproven.
+3. Test upload, image edits, export USDZ, library save/reload, backup/restore and
+   mobile layout. Investigate failures; add focused regression tests.
+4. Confirm Cloudflare URL/settings with user if not available. Pages: branch main,
+   root repository, build `npm run build`, output `dist`. Workers alternative:
+   build `npm run build`, deploy `npx wrangler deploy`. Serve dist only.
+5. Run README acceptance checklist on a real iPhone/Safari: portrait/landscape,
+   blank/featured indoor walls, near/far distances, upright parallel placement,
+   tape-measured scale, thickness/gap, texture, lighting, drift and diptychs.
+   Specifically verify Blob URL launch with download attribute, scale-lock fragment,
+   pinch response and reset/relaunch. Use native screenshots; no webpage capture API.
 
-### B. Performance on iPhone
-1. `crc32` in `model.mjs` is bit-by-bit (~8 steps per byte) and re-runs on every rebuild. Switch to a 256-entry lookup table, and cache each asset's bytes and CRC by texture key.
-2. `prepare()` in `app.mjs` re-reads every image's bytes on every change. Cache them alongside the texture cache.
-3. Move texture rendering and USDZ building to a Web Worker with `OffscreenCanvas`, so the page doesn't freeze. In `adjustPixel`, compute the hue cos/sin and other per-image constants once, not per pixel.
-4. Library thumbnails decode full originals. Store a ~256 px thumbnail with each saved record.
-5. Soft-deleted ("trashed") records stay in IndexedDB forever and are loaded on every refresh. Hard-delete once undo is no longer available.
-
-### C. Data safety
-1. Safari deletes site storage after 7 days without a visit unless the site is added to the Home Screen. Call `navigator.storage.persist()`, add a web app manifest and `apple-touch-icon`, and prompt users to export their library after saving.
-2. Library import (`app.mjs`, backup-file handler) spreads each backup entry wholesale. Build clean records with only known fields (like `recordFromPiece`).
-
-### D. Engineering maturity
-1. Code is written minified-style (very long single lines in `app.mjs`, 3-line `style.css`). Add Prettier and ESLint, reformat once in its own commit, then split `app.mjs` into modules (library, inspector, preview, AR launch).
-2. Add GitHub Actions CI: `npm test`, `npm run build`, generate a sample USDZ, run `validate-usdz.py` and `usdchecker --arkit` (from `usd-core`). Expect `usdchecker` to flag missing mesh `extent`s; add them.
-3. Add `// @ts-check` plus JSDoc for editor type checking.
-4. Break the one-line tests into readable cases. Add Playwright end-to-end tests for upload, edit, export USDZ, save, reload, export/import library. Chromium works in this environment (`executablePath: '/opt/pw-browsers/chromium'`); collapsed `<details>` panels must be opened before interacting with sliders.
-
-### E. Polish
-- `public/_headers`: change `Permissions-Policy` to `camera=()` (the app never uses the camera); add a CSP such as `default-src 'self'; img-src 'self' blob: data:`.
-- Add a favicon (currently a 404 on every load), `apple-touch-icon`, and link-preview meta tags.
-- Respect the system light/dark setting when no theme is saved.
-- Uploading more files than the 8-piece limit rejects the whole batch; add as many as fit instead.
-- The arrangement isn't saved, so a reload loses the layout. Persist it (and later, shareable layouts).
-- Rename the sample piece from "Uploaded artwork · sample".
-- Add to the README iPhone checklist: confirm Quick Look honours `#allowsContentScaling=0` on a blob URL, and that launch works with the link's `download` attribute set.
-
-### F. Still required before calling Phase 1 done
-1. Deploy to Cloudflare (Pages: build `npm run build`, output `dist`; or Workers: `npx wrangler deploy`).
-2. Run the README iPhone acceptance checklist on a real device.
+## Backlog — after functional validation
+- Performance: CRC lookup table; cache texture bytes/CRCs; precompute edit constants;
+  consider workers only if measured stalls justify them; small library thumbnails.
+- Data safety: whitelist imported fields; explore persistent-storage/PWA support.
+  Browser storage can be evicted; no fixed retention guarantee. Keep export guidance.
+  Do not silently purge recoverable library originals to optimize refresh.
+- Maintainability: readable formatting, focused modules, CI with USD validation,
+  mesh extents/type checks if validators require them; avoid a broad rewrite.
+- Polish: favicon/touch icon, metadata, arrangement persistence, partial batch uploads.
+  Keep user-requested dark default. Evaluate security headers without breaking Blob AR.
 
 ## Files
-- `public/app.mjs`: UI, arrangement, AR launch, library workflows.
-- `public/model.mjs`: USD geometry/materials, aligned stored ZIP writer.
-- `public/images.mjs`: image detection, edits, AR textures, shadow/label textures.
-- `public/state.mjs`: constants, dimensions/layout, validation. `storage.mjs`: IndexedDB.
-- `README.md`: setup, limits, iPhone test steps. `DECISIONS.md`: architecture rationale.
+public/app.mjs (UI/AR/library), model.mjs (USD/ZIP), images.mjs (textures/edits),
+state.mjs (units/layout), storage.mjs (IndexedDB), index.html/style.css (interface).
+README.md: hosting/testing/limits. DECISIONS.md: architecture.
 
 ## Verify
-`npm test`, `npm run build`, `npm run dev` (port 4173). Optional: `pip install usd-core` then `python scripts/validate-usdz.py FILE.usdz`.
+`npm test`; `npm run build`; `npm run dev` (4173).
+Optional: `pip install usd-core`; `python scripts/validate-usdz.py FILE.usdz`.
+OpenUSD validation is not physical iPhone validation.
 
 ## Resume
-Read this file, README and DECISIONS. Keep the existing architecture (Quick Look + browser-built USDZ). Work through the list above in order; ask the owner before changing documented defaults (item A).
+Continue existing main, resolve the Next list, and push verified fixes to main.
+Keep usage low: targeted reads/tests, brief updates, no repeated architecture research.
+Update this handoff at meaningful milestones; do not call Phase 1 complete until
+the real-device acceptance checks pass.
