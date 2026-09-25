@@ -1,4 +1,4 @@
-# AR WALLE — handoff
+# AR[T]WALLE — handoff
 Updated 2026-09-25. Read this first to continue without repeating prior work.
 
 ## Goal
@@ -7,7 +7,8 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 
 ## Now
 - Source of truth: https://github.com/yitzhach/AR-WALLE, branch `main`.
-- Continued main from `6f040ec`; this update improves saving, controls and shadows.
+- Continued main from `92b89b8`; this update adds a Library editor tab and
+  changes the displayed name to AR[T]WALLE. GitHub repository name stays AR-WALLE.
 - Cloudflare deployment is unverified; no live Cloudflare URL was supplied here.
 - User confirmed native pinch works on iPhone. Physical scale, reset and shadows remain unverified.
 - This update: 15/15 Node tests and production build pass.
@@ -30,6 +31,8 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 - VIEW ON MY WALL sits directly below the preview; Image controls scroll while
   the preview and launch button remain visible. Shadow perimeter and projection
   are enlarged and the AR shadow sits within the half-inch mounting gap.
+- Library tab beneath the preview mirrors saved artwork and upload/camera,
+  backup/restore and undo actions. The original library section remains.
 - Labels preserve 8:1 ratio; art opaque; textures capped at 4096 pixels.
   JPEG/PNG originals retained; imported HEIC is saved as JPEG. Prior OpenUSD passed.
 - Browser checks covered sizing, duplication, themes, save/reload and scale-lock UI.
@@ -45,6 +48,8 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 - Multiple artworks move as one AR object. Wall guide is not camera calibration.
 - Lighting/shadow effects are approximations, not paint-relief reconstruction.
 - Library is browser/domain-local. Export before changing domain/clearing storage.
+- Brand display is AR[T]WALLE; keep existing repository and IndexedDB identifiers
+  so users retain their saved work.
 - Sample's actual dimensions are unknown; initial 48-inch height is illustrative.
 - User authorized fixes and pushing completed work to main; user plans Cloudflare setup.
 
@@ -53,7 +58,8 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 2. On iPhone Safari, test a camera photo and a native HEIC from Photos, including
    orientation, auto-save in library, save after edits, backup and AR texture.
    Existing photos from before this update need a manual Save artwork changes.
-   Check Remove selected, tabs, sticky image preview and upload picker on narrow phones.
+   Check Remove selected, tabs (including both Library views), sticky image preview
+   and upload picker on narrow phones.
 3. Test image edits, export USDZ, library save/reload, backup/restore and
    mobile layout. Investigate failures; add focused regression tests.
 4. Confirm Cloudflare URL/settings with user if not available. Pages: branch main,

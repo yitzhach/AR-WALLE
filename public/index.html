@@ -1,8 +1,8 @@
 <!doctype html>
 <html lang="en" data-theme="dark">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111318"><title>AR WALLE · Artwork on your wall</title><meta name="description" content="Arrange your artwork, set physical dimensions and view it on your wall with iPhone AR."><link rel="stylesheet" href="style.css"><script type="module" src="app.mjs"></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#111318"><title>AR[T]WALLE · Artwork on your wall</title><meta name="description" content="Arrange your artwork, set physical dimensions and view it on your wall with iPhone AR."><link rel="stylesheet" href="style.css"><script type="module" src="app.mjs"></script></head>
 <body>
-<header class="topbar"><a class="wordmark" href="./" aria-label="AR WALLE home">AR <span>WALLE</span></a><span class="header-note">Your art. Your space.</span><button id="theme" aria-label="Switch to light mode">Light mode</button></header>
+<header class="topbar"><a class="wordmark" href="./" aria-label="AR[T]WALLE home">AR<span class="brand-t">[T]</span><span>WALLE</span></a><span class="header-note">Your art. Your space.</span><button id="theme" aria-label="Switch to light mode">Light mode</button></header>
 <main class="studio">
  <aside class="library panel" aria-label="Artwork library">
   <div class="section-heading"><h1>Art library</h1><span id="saved-count">0 saved</span></div>
@@ -24,6 +24,7 @@
   <div id="piece-tabs" class="piece-tabs" aria-label="Pieces in arrangement"></div>
   <nav class="editor-tabs" role="tablist" aria-label="Editor tools">
    <button role="tab" id="tab-artwork" aria-controls="panel-artwork" aria-selected="true"><span aria-hidden="true">▣</span>Artwork</button>
+   <button role="tab" id="tab-library" aria-controls="panel-library" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span>Library</button>
    <button role="tab" id="tab-image" aria-controls="panel-image" aria-selected="false" tabindex="-1"><span aria-hidden="true">◐</span>Image</button>
    <button role="tab" id="tab-display" aria-controls="panel-display" aria-selected="false" tabindex="-1"><span aria-hidden="true">☼</span>Display</button>
    <button role="tab" id="tab-wall" aria-controls="panel-wall" aria-selected="false" tabindex="-1"><span aria-hidden="true">▤</span>Wall</button>
@@ -48,6 +49,14 @@
   </div></section>
   <section role="tabpanel" id="panel-wall" aria-labelledby="tab-wall" hidden><div class="detail-content"><div class="fields"><label>Wall width (in)<input id="wallWidth" type="number" min="12" max="600" step="any" value="120"></label><label>Wall height (in)<input id="wallHeight" type="number" min="12" max="600" step="any" value="96"></label></div><label class="check"><input id="wallGuide" type="checkbox">Show wall guide in AR</label><p class="quiet">Enter measured wall dimensions to compare scale. This guide does not recalibrate Apple’s tracking. Dimension labels and the wall guide lock AR resizing.</p></div></section>
   <section role="tabpanel" id="panel-arrange" aria-labelledby="tab-arrange" hidden><div class="detail-content"><div class="arrangement-toolbar"><label>Layout<select id="layout"><option value="row">Side by side</option><option value="column">Vertical</option><option value="grid">Grid · 2 columns</option></select></label><label>Gap (in)<input id="gap" type="number" min="0" max="60" step="0.5" value="3"></label><button id="duplicate">Duplicate selected</button><button id="remove">Remove selected</button></div></div></section>
+  <section role="tabpanel" id="panel-library" aria-labelledby="tab-library" hidden><div class="detail-content library-tab-content">
+   <div class="section-heading"><h2>Saved artwork</h2><span id="saved-count-tab">0 saved</span></div>
+   <div class="library-tab-actions"><button id="tab-upload" class="primary">＋ Upload artwork</button><button id="tab-camera">Take photo</button></div>
+   <div id="library-list-tab" class="library-list"></div>
+   <div class="library-footer"><button id="tab-backup">Export library</button><button id="tab-restore">Import library</button></div>
+   <button id="tab-undo-delete" hidden>Undo removal from library</button>
+   <p class="quiet">Saved on this browser. Export before clearing browser data or changing devices.</p>
+  </div></section>
   </div>
   <p id="preview-note" class="quiet">Select an artwork to edit it. The wall preview is a size reference.</p>
   <p id="message" class="message" role="status" aria-live="polite"></p>

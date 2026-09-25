@@ -27,3 +27,14 @@
 #panel-image{max-height:min(48dvh,460px);overflow-y:auto;overscroll-behavior:contain}
 #panel-image .detail-content{max-width:none}
 @media(max-width:700px){.image-editing .wall-wrap{height:clamp(190px,30dvh,300px)}.image-editing .launch-card{padding:9px;gap:4px;margin-top:6px}.image-editing .launch img{height:44px}.image-editing .launch-card>div{display:none}#panel-image{max-height:max(160px,30dvh)}}
+
+.wordmark .brand-t{font-weight:750;color:var(--accent)}
+.inspector .library-tab-content{max-width:none}
+.library-tab-content .section-heading{margin:0}
+.library-tab-content .section-heading h2{font-size:17px;font-weight:600}
+.library-tab-content .section-heading span{font-size:12px;color:var(--muted)}
+.library-tab-actions{display:flex;gap:8px;flex-wrap:wrap}
+.library-tab-content .library-list{grid-template-columns:repeat(auto-fill,minmax(180px,1fr));margin-top:4px}
+.library-tab-content .library-card{border:1px solid var(--border);border-radius:8px;padding:10px;align-items:start}
+.library-tab-content .library-footer{margin-top:0}
+@media(max-width:700px){.wordmark{font-size:21px}.library-tab-actions button{flex:1}#panel-library{max-height:50dvh;overflow-y:auto;overscroll-behavior:contain}.library-tab-content .library-list{grid-template-columns:repeat(auto-fill,minmax(145px,1fr))}}

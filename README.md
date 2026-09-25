@@ -1,4 +1,4 @@
-# AR WALLE
+# AR[T]WALLE
 
 A small static artwork studio using Apple AR Quick Look and locally generated USDZ. No account, upload server, AI, framework, or runtime dependencies.
 
@@ -37,7 +37,7 @@ Brightness, contrast, saturation, highlights, shadows, hue, warmth and flips ope
 
 ## Saved library
 
-New uploads save automatically; save again after editing an artwork. IndexedDB stores its original, dimensions, side color and image edits on this browser and origin. If automatic saving fails, the artwork remains in the arrangement and a message offers a manual retry. Arrangements and scene lighting settings are not saved. Export/import library JSON provides a portable backup. Library removal is soft deletion with an Undo option for the most recent removal. Clearing browser data, private browsing, or changing domains can lose access to saves; export first. This is not cloud synchronization.
+New uploads save automatically; save again after editing an artwork. The Library tab below the wall preview shows the same saved artwork and upload, camera, backup and restore actions as the library section. IndexedDB stores its original, dimensions, side color and image edits on this browser and origin. If automatic saving fails, the artwork remains in the arrangement and a message offers a manual retry. Arrangements and scene lighting settings are not saved. Export/import library JSON provides a portable backup. Library removal is soft deletion with an Undo option for the most recent removal. Clearing browser data, private browsing, or changing domains can lose access to saves; export first. This is not cloud synchronization.
 
 Input limits: JPG/PNG and decodable HEIC/HEIF, 15 MB per selected file and converted JPEG, 24 megapixels (larger HEIC/HEIF is reduced locally), eight pieces, 60 MB combined working images; generated USDZ capped at 100 MB. WebP is not supported. HEIC/HEIF conversion does not save the original HEIC bytes in the library backup.
 
