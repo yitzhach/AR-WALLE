@@ -1,4 +1,8 @@
 export const INITIAL_EDITS = Object.freeze({brightness:0,contrast:0,saturation:0,highlights:0,shadows:0,hue:0,warmth:0,flipH:false,flipV:false});
+// Label textures are 1024×128; AR label quads must keep this ratio or text distorts.
+export const LABEL_ASPECT=8;
+// Longest texture edge sent to AR: fits every AR-capable iPhone GPU and Safari's canvas limit.
+export const MAX_TEXTURE=4096;
 export const INITIAL_SCENE = Object.freeze({layout:'row',gap:3,shadow:true,gallery:false,dimensions:false,wallGuide:false,wallWidth:120,wallHeight:96,resize:true});
 export function createPiece(id,name,blob,pixelWidth,pixelHeight,normalize=false){
  return {id,name,blob,pixelWidth,pixelHeight,normalize,width:48*pixelWidth/pixelHeight,height:48,depth:3.5,color:'#747474',aspect:true,ratio:pixelWidth/pixelHeight,edits:{...INITIAL_EDITS}};

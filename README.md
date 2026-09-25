@@ -33,7 +33,7 @@ Pinch resizing is enabled by default in this expanded editor. Turn it off for tr
 
 The optional measured wall reference is a visual comparison, not camera calibration. Gallery lighting is a deterministic spotlight simulation applied to a preview texture; it is not a physical spotlight or inferred paint relief. The optional soft shadow is a textured plane behind the panel, offset sideways/downward. Native AR lighting and shadows may differ from the webpage.
 
-Brightness, contrast, saturation, highlights, shadows, hue, warmth and flips operate on a derivative. Originals remain stored unchanged. Unedited, normally oriented images are embedded byte-for-byte in USDZ. Edited/gallery/EXIF-normalized derivatives use canvas PNG, maximum 2048 pixels on the long edge. Native rendering/color management can affect apparent color.
+Brightness, contrast, saturation, highlights, shadows, hue, warmth and flips operate on a derivative. Originals remain stored unchanged. Unedited, normally oriented images up to 4096 pixels on the long edge are embedded byte-for-byte in USDZ. Larger, edited, gallery-lit or EXIF-normalized images use a derivative at the same 4096-pixel cap (JPEG at 0.92 quality; PNG sources stay PNG). Artwork renders opaque; only shadow and label overlays use transparency. Native rendering/color management can affect apparent color.
 
 ## Saved library
 
@@ -43,7 +43,7 @@ Input limits: JPG/PNG only, 15 MB per file, 24 megapixels, eight pieces, 60 MB c
 
 ## Verification
 
-Eight Node tests cover units, layout, aspect ratios, scale locking, input validation, deterministic adjustments, original bytes and ZIP alignment. An exported 48 × 60-inch USDZ was also parsed with OpenUSD and its geometry, texture bytes and CRC verified. Browser checks covered page load, dark/light controls, manual sizes, duplication, scale-lock UI, library save and persistence after reload. The automated browser upload/download check stalled; upload/export/restore and mobile layout need a manual smoke test. No physical iPhone AR validation is claimed.
+Eleven Node tests cover units, label proportions, texture caps, layout, aspect ratios, scale locking, input validation, deterministic adjustments, original bytes and ZIP alignment. An exported 48 × 60-inch USDZ was also parsed with OpenUSD and its geometry, texture bytes and CRC verified. Browser checks covered page load, dark/light controls, manual sizes, duplication, scale-lock UI, library save and persistence after reload. The automated browser upload/download check stalled; upload/export/restore and mobile layout need a manual smoke test. No physical iPhone AR validation is claimed.
 
 Optional package validation:
 

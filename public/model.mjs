@@ -1,4 +1,4 @@
-import {layoutPieces} from './state.mjs';
+import {layoutPieces,LABEL_ASPECT} from './state.mjs';
 const enc=new TextEncoder(), M=.0254;
 const tuple=a=>'('+a.join(', ')+')';
 const linear=n=>{n/=255;return n<=.04045?n/12.92:((n+.055)/1.055)**2.4};
@@ -51,16 +51,16 @@ export function scene(pieces,settings){
    [[r,t,back],[l,t,back],[l,t,front],[r,t,front]],
    [[l,t,back],[l,b,back],[l,b,front],[l,t,front]],
    [[r,b,back],[r,t,back],[r,t,front],[r,b,front]]],`Side${i}`));
-  mats.push(material(`Image${i}`,[1,1,1],`art${i}.${p.extension||'jpeg'}`,true));
+  mats.push(material(`Image${i}`,[1,1,1],`art${i}.${p.extension||'jpeg'}`));
   mats.push(material(`Side${i}`,[1,3,5].map(c=>linear(parseInt(p.color.slice(c,c+2),16)))));
   if(settings.shadow){const pad=Math.max(.7*M,Math.min(p.width,p.height)*M*.045),dx=.45*M,dy=-.6*M;geometries.push(quad(`Shadow${i}`,l-pad+dx,b-pad+dy,r+pad+dx,t+pad+dy,.0002,'Shadow'));}
-  if(settings.dimensions){const width=Math.min(p.width,32)*M;geometries.push(quad(`Label${i}`,p.x*M-width/2,b-3*M,p.x*M+width/2,b-.6*M,front,`Label${i}`));mats.push(material(`Label${i}`,[1,1,1],`label${i}.png`,true));}
+  if(settings.dimensions){const width=Math.min(p.width,2.4*LABEL_ASPECT)*M,top=b-.6*M;geometries.push(quad(`Label${i}`,p.x*M-width/2,top-width/LABEL_ASPECT,p.x*M+width/2,top,front,`Label${i}`));mats.push(material(`Label${i}`,[1,1,1],`label${i}.png`,true));}
  });
  if(settings.shadow)mats.push(material('Shadow',[0,0,0],'shadow.png',true));
  if(settings.wallGuide){
   const w=settings.wallWidth*M/2,h=settings.wallHeight*M/2,q=.003;
   geometries.push(quad('WallTop',-w,h-q,w,h,0,'Guide',false),quad('WallBottom',-w,-h,w,-h+q,0,'Guide',false),quad('WallLeft',-w,-h,-w+q,h,0,'Guide',false),quad('WallRight',w-q,-h,w,h,0,'Guide',false));
-  geometries.push(quad('WallLabel',-Math.min(w,.6),h+.01,Math.min(w,.6),h+.08,.0003,'WallText'));
+  const lw=Math.min(w,.07*LABEL_ASPECT/2);geometries.push(quad('WallLabel',-lw,h+.01,lw,h+.01+2*lw/LABEL_ASPECT,.0003,'WallText'));
   mats.push(material('Guide',[.15,.55,.65],'',false,true),material('WallText',[1,1,1],'wall-label.png',true));
  }
  return `#usda 1.0

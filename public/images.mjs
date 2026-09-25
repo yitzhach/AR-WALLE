@@ -1,4 +1,4 @@
-import {INITIAL_EDITS} from './state.mjs';
+import {INITIAL_EDITS,LABEL_ASPECT,MAX_TEXTURE} from './state.mjs';
 export async function detectImage(blob){
  const bytes=new Uint8Array(await blob.slice(0,65536).arrayBuffer());let type;
  if(bytes[0]===255&&bytes[1]===216)type='image/jpeg';
@@ -15,6 +15,8 @@ export async function detectImage(blob){
 }
 export function loadImage(blob){return new Promise((resolve,reject)=>{const url=URL.createObjectURL(blob),image=new Image();image.onload=()=>resolve({image,url});image.onerror=()=>{URL.revokeObjectURL(url);reject(Error('This image could not be decoded. Try another JPG or PNG.'))};image.src=url;});}
 export const isEdited=e=>Object.keys(INITIAL_EDITS).some(k=>e[k]!==INITIAL_EDITS[k]);
+const hasPixelEdits=e=>Object.keys(INITIAL_EDITS).some(k=>!k.startsWith('flip')&&e[k]!==INITIAL_EDITS[k]);
+export const textureSize=(w,h)=>{const scale=Math.min(1,MAX_TEXTURE/Math.max(w,h));return [Math.max(1,Math.round(w*scale)),Math.max(1,Math.round(h*scale))];};
 const clamp=v=>Math.max(0,Math.min(255,v));
 export function adjustPixel(r,g,b,e,light=1){
  const bright=2**(e.brightness/100),contrast=1+e.contrast/100,sat=1+e.saturation/100;
@@ -30,23 +32,27 @@ export function adjustPixel(r,g,b,e,light=1){
  const bb=(.213-.213*c-.787*s)*r+(.715-.715*c+.715*s)*g+(.072+.928*c+.072*s)*b;
  return [clamp(rr*light),clamp(gg*light),clamp(bb*light)];
 }
-const png=canvas=>new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Could not prepare the image.')),'image/png'));
+const encode=(canvas,type='image/png')=>new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('Could not prepare the image.')),type,.92));
+const png=canvas=>encode(canvas);
 export async function renderTexture(piece,gallery=false){
- const loaded=await loadImage(piece.blob),e=piece.edits;
- if(!isEdited(e)&&!gallery&&!piece.normalize)return {...loaded,blob:piece.blob,extension:piece.blob.type==='image/png'?'png':'jpeg'};
- const {image,url}=loaded;
+ const loaded=await loadImage(piece.blob),e=piece.edits,{image,url}=loaded,source=piece.blob.type==='image/png'?'png':'jpeg';
+ const [width,height]=textureSize(image.naturalWidth,image.naturalHeight),oversized=width!==image.naturalWidth;
+ if(!isEdited(e)&&!gallery&&!piece.normalize&&!oversized)return {...loaded,blob:piece.blob,extension:source};
  try{
-  const scale=Math.min(1,2048/Math.max(image.naturalWidth,image.naturalHeight)),canvas=document.createElement('canvas');
-  canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
-  const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.translate(e.flipH?canvas.width:0,e.flipV?canvas.height:0);ctx.scale(e.flipH?-1:1,e.flipV?-1:1);ctx.drawImage(image,0,0,canvas.width,canvas.height);
-  const pixels=ctx.getImageData(0,0,canvas.width,canvas.height),a=pixels.data;
-  for(let y=0;y<canvas.height;y++)for(let x=0;x<canvas.width;x++){
-   const i=(y*canvas.width+x)*4,nx=x/canvas.width,ny=y/canvas.height;
-   // Deliberately a preview spotlight simulation, not inferred surface relief.
-   const light=gallery?.88+.26*Math.exp(-((nx-.35)**2/.12+(ny-.1)**2/.45)):1;
-   const rgb=adjustPixel(a[i],a[i+1],a[i+2],e,light);a[i]=rgb[0];a[i+1]=rgb[1];a[i+2]=rgb[2];
+  const canvas=document.createElement('canvas');canvas.width=width;canvas.height=height;
+  const ctx=canvas.getContext('2d',{willReadFrequently:true});ctx.translate(e.flipH?width:0,e.flipV?height:0);ctx.scale(e.flipH?-1:1,e.flipV?-1:1);ctx.drawImage(image,0,0,width,height);
+  if(hasPixelEdits(e)||gallery){
+   const pixels=ctx.getImageData(0,0,width,height),a=pixels.data;
+   for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+    const i=(y*width+x)*4,nx=x/width,ny=y/height;
+    // Deliberately a preview spotlight simulation, not inferred surface relief.
+    const light=gallery?.88+.26*Math.exp(-((nx-.35)**2/.12+(ny-.1)**2/.45)):1;
+    const rgb=adjustPixel(a[i],a[i+1],a[i+2],e,light);a[i]=rgb[0];a[i+1]=rgb[1];a[i+2]=rgb[2];
+   }
+   ctx.putImageData(pixels,0,0);
   }
-  ctx.putImageData(pixels,0,0);const blob=await png(canvas),out=await loadImage(blob);return {...out,blob,extension:'png'};
+  // PNG sources may carry transparency; photos stay JPEG so derivatives are not larger than originals.
+  const blob=await encode(canvas,source==='png'?'image/png':'image/jpeg'),out=await loadImage(blob);return {...out,blob,extension:source};
  }finally{URL.revokeObjectURL(url);}
 }
 export async function makeShadow(){
@@ -57,5 +63,5 @@ export async function makeShadow(){
  ctx.putImageData(p,0,0);return new Uint8Array(await(await png(c)).arrayBuffer());
 }
 export async function makeLabel(text){
- const c=document.createElement('canvas');c.width=1024;c.height=128;const ctx=c.getContext('2d');ctx.fillStyle='rgba(19,23,29,0.9)';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='44px Arial';ctx.fillText(text,512,64,960);return new Uint8Array(await(await png(c)).arrayBuffer());
+ const c=document.createElement('canvas');c.width=1024;c.height=1024/LABEL_ASPECT;const ctx=c.getContext('2d');ctx.fillStyle='rgba(19,23,29,0.9)';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='44px Arial';ctx.fillText(text,512,c.height/2,960);return new Uint8Array(await(await png(c)).arrayBuffer());
 }
