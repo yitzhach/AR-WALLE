@@ -92,3 +92,15 @@ export async function makeShadow(){
 export async function makeLabel(text){
  const c=document.createElement('canvas');c.width=1024;c.height=1024/LABEL_ASPECT;const ctx=c.getContext('2d');ctx.fillStyle='rgba(19,23,29,0.9)';ctx.fillRect(0,0,c.width,c.height);ctx.fillStyle='#fff';ctx.textAlign='center';ctx.textBaseline='middle';ctx.font='44px Arial';ctx.fillText(text,512,c.height/2,960);return new Uint8Array(await(await png(c)).arrayBuffer());
 }
+
+// Small original-image library previews; full originals remain available for AR/backup.
+export async function makeThumbnail(blob){
+ const {image,url}=await loadImage(blob);
+ try{
+  const scale=Math.min(1,256/Math.max(image.naturalWidth,image.naturalHeight));
+  const canvas=document.createElement('canvas');
+  canvas.width=Math.max(1,Math.round(image.naturalWidth*scale));canvas.height=Math.max(1,Math.round(image.naturalHeight*scale));
+  canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);
+  return await encode(canvas,blob.type);
+ }finally{URL.revokeObjectURL(url);}
+}

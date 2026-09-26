@@ -1,7 +1,7 @@
 import {INITIAL_EDITS,INITIAL_SCENE,createPiece,layoutPieces,setDimension,setScaleOption,arFragment,validateRecord,fmt} from './state.mjs';
 import {saveMany,listSaved,trash,restore} from './storage.mjs';
-import {detectImage,prepareUpload,loadImage,renderTexture,makeShadow,makeLabel} from './images.mjs';
-import {build} from './model.mjs';
+import {detectImage,prepareUpload,loadImage,renderTexture,makeShadow,makeLabel,makeThumbnail} from './images.mjs';
+import {build,textureAsset} from './model.mjs';
 const $=id=>document.getElementById(id),pieces=[],settings={...INITIAL_SCENE};
 let selected=null,saved=[],deleted=null,libraryURLs=[],cache=new Map(),generation=0,timer,arBlob,arURL,shadow,picking=false,theme='dark',libraryBusy=false;
 let supportsAR=false;try{supportsAR=$('launch').relList.supports('ar')}catch{}
@@ -38,7 +38,7 @@ async function prepare(){
   shadow??=await makeShadow();
   for(let i=0;i<layout.items.length;i++){
    const p=pieces[i],tx=await texture(p,version);if(version!==generation)return;
-   assets.push([`art${i}.${tx.extension}`,new Uint8Array(await tx.blob.arrayBuffer())]);models.push({...p,extension:tx.extension});
+   const asset=await textureAsset(tx.blob);assets.push([`art${i}.${tx.extension}`,asset.bytes,asset.crc]);models.push({...p,extension:tx.extension});
    if(settings.dimensions)assets.push([`label${i}.png`,await makeLabel(`${fmt(p.width)} × ${fmt(p.height)} × ${fmt(p.depth)} in`)]);
   }
   if(version!==generation)return;
@@ -101,8 +101,8 @@ $('duplicate').addEventListener('click',()=>{try{const p=active();if(p){addPiece
 function removeSelected(){const i=pieces.findIndex(p=>p.id===selected);if(i<0)return;const old=cache.get(selected);if(old)URL.revokeObjectURL(old.url);cache.delete(selected);pieces.splice(i,1);selected=pieces[Math.max(0,i-1)]?.id||null;picking=false;updateArrangement();notice('Removed from this arrangement. A saved library copy is still available below.');}
 for(const id of ['remove','remove-artwork'])$(id).addEventListener('click',removeSelected);
 async function importFiles(files){
- if(files.length+pieces.length>8){notice('Add up to 8 pieces per arrangement. Remove a piece before uploading more.');return;}
  let added=0,converted=0;const errors=[],imported=[];for(const file of files){let loaded;try{
+  if(pieces.length>=8)throw Error('Eight-piece limit reached. Remove a piece to add this image.');
   if(file.size>15*1024*1024)throw Error('Each artwork must be under 15 MB.');
   if(pieces.reduce((n,p)=>n+p.blob.size,0)+file.size>60*1024*1024)throw Error('Keep the arrangement’s source images under 60 MB total.');
   const source=await prepareUpload(file);if(pieces.reduce((n,p)=>n+p.blob.size,0)+source.blob.size>60*1024*1024)throw Error('Keep the arrangement’s source images under 60 MB total.');loaded=await loadImage(source.blob);const {naturalWidth:w,naturalHeight:h}=loaded.image;if(w*h>24000000)throw Error('Please use an image of 24 megapixels or less.');
@@ -126,10 +126,16 @@ $('camera').addEventListener('click',()=>$('camera-file').click());$('camera-fil
 for(const [tabButton,action]of [['tab-upload','upload'],['tab-camera','camera'],['tab-backup','backup'],['tab-restore','restore']])$(tabButton).addEventListener('click',()=>$(action).click());
 function recordFromPiece(p,id){return {id,name:p.name,blob:p.blob,pixelWidth:p.pixelWidth,pixelHeight:p.pixelHeight,normalize:p.normalize,width:p.width,height:p.height,depth:p.depth,color:p.color,aspect:p.aspect,ratio:p.ratio,edits:{...p.edits},updatedAt:Date.now(),trashed:false};}
 function syncUndo(){for(const id of ['undo-delete','tab-undo-delete'])$(id).hidden=!deleted;}
-function libraryCard(r,url){const card=element('div',{class:'library-card'});card.append(element('img',{src:url,alt:r.name}));const content=element('div');content.append(element('p',{},r.name));const actions=element('div',{class:'actions'}),add=element('button',{},'Add'),remove=element('button',{},'Remove');add.setAttribute('aria-label',`Add ${r.name} from library`);remove.setAttribute('aria-label',`Remove ${r.name} from library`);add.addEventListener('click',()=>{try{addPiece({...r,libraryId:r.id});updateArrangement();notice('Added saved artwork with its dimensions and edits.');}catch(e){notice(e.message)}});remove.addEventListener('click',async()=>{try{await trash(r);deleted=r;syncUndo();await refreshLibrary();notice('Removed from library. You can undo this removal.');}catch(e){notice(e.message)}});actions.append(add,remove);content.append(actions);card.append(content);return card;}
-async function refreshLibrary(){saved=await listSaved();libraryURLs.forEach(URL.revokeObjectURL);libraryURLs=[];const roots=[$('library-list'),$('library-list-tab')];for(const root of roots)root.replaceChildren();for(const id of ['saved-count','saved-count-tab'])$(id).textContent=`${saved.length} saved`;
+function libraryCard(r,url){const card=element('div',{class:'library-card'});card.append(element('img',{src:url,alt:r.name,loading:'lazy',decoding:'async'}));const content=element('div');content.append(element('p',{},r.name));const actions=element('div',{class:'actions'}),add=element('button',{},'Add'),remove=element('button',{},'Remove');add.setAttribute('aria-label',`Add ${r.name} from library`);remove.setAttribute('aria-label',`Remove ${r.name} from library`);add.addEventListener('click',()=>{try{addPiece({...r,libraryId:r.id});updateArrangement();notice('Added saved artwork with its dimensions and edits.');}catch(e){notice(e.message)}});remove.addEventListener('click',async()=>{try{await trash(r);deleted=r;syncUndo();await refreshLibrary();notice('Removed from library. You can undo this removal.');}catch(e){notice(e.message)}});actions.append(add,remove);content.append(actions);card.append(content);return card;}
+let libraryGeneration=0;
+const thumbnails=new Map();
+async function refreshLibrary(){const version=++libraryGeneration;const records=await listSaved();
+ for(const r of records){const old=thumbnails.get(r.id);if(old?.updatedAt===r.updatedAt)continue;try{const blob=await makeThumbnail(r.blob);if(version!==libraryGeneration)return;thumbnails.set(r.id,{updatedAt:r.updatedAt,blob});}catch{/* Use the original if thumbnail generation is unavailable. */}}
+ if(version!==libraryGeneration)return;
+ const ids=new Set(records.map(r=>r.id));for(const id of thumbnails.keys())if(!ids.has(id))thumbnails.delete(id);
+ saved=records;libraryURLs.forEach(URL.revokeObjectURL);libraryURLs=[];const roots=[$('library-list'),$('library-list-tab')];for(const root of roots)root.replaceChildren();for(const id of ['saved-count','saved-count-tab'])$(id).textContent=`${saved.length} saved`;
  if(!saved.length){for(const root of roots)root.append(element('p',{class:'quiet'},'Save your first artwork to reuse it in another arrangement.'));return;}
- saved.sort((a,b)=>b.updatedAt-a.updatedAt).forEach(r=>{const url=URL.createObjectURL(r.blob);libraryURLs.push(url);for(const root of roots)root.append(libraryCard(r,url));});
+ saved.sort((a,b)=>b.updatedAt-a.updatedAt).forEach(r=>{const url=URL.createObjectURL(thumbnails.get(r.id)?.blob||r.blob);libraryURLs.push(url);for(const root of roots)root.append(libraryCard(r,url));});
 }
 $('save').addEventListener('click',async()=>{if(libraryBusy||!active())return;libraryBusy=true;$('save').disabled=true;const p=active(),id=p.libraryId||uid();try{const record=validateRecord(recordFromPiece(p,id));await saveMany([record]);p.libraryId=id;await refreshLibrary();notice(`Saved “${record.name}” on this browser.`);}catch(e){notice(`Could not save: ${e.message}. Your artwork is still in the arrangement; try again or export it.`);}finally{libraryBusy=false;$('save').disabled=!active();}});
 async function undoDelete(){if(!deleted)return;try{await restore(deleted);deleted=null;syncUndo();await refreshLibrary();notice('Library artwork restored.');}catch(e){notice(e.message)}}

@@ -84,12 +84,24 @@ def Xform "Artwork" (prepend apiSchemas = ["Preliminary_AnchoringAPI"]
 }`;
 }
 export function build(pieces,settings,assets){return zip([['model.usda',enc.encode(scene(pieces,settings))],...assets]);}
-function crc32(a) { let c=0xffffffff; for(const b of a){ c^=b; for(let k=0;k<8;k++) c=(c>>>1)^((c&1)?0xedb88320:0); } return (c^0xffffffff)>>>0; }
+const crcTable=Uint32Array.from({length:256},(_,n)=>{
+ let c=n;for(let k=0;k<8;k++)c=(c>>>1)^((c&1)?0xedb88320:0);return c>>>0;
+});
+export function crc32(bytes){
+ let c=0xffffffff;for(const b of bytes)c=(c>>>8)^crcTable[(c^b)&255];return (c^0xffffffff)>>>0;
+}
+// Blob objects are immutable. Weak keys release bytes/checksums when textures expire.
+const assetCache=new WeakMap();
+export function textureAsset(blob){
+ let pending=assetCache.get(blob);
+ if(!pending){pending=blob.arrayBuffer().then(buffer=>{const bytes=new Uint8Array(buffer);return {bytes,crc:crc32(bytes)};});assetCache.set(blob,pending);pending.catch(()=>assetCache.delete(blob));}
+ return pending;
+}
 // ZIP_STORED, aligned file payloads, USD root first. No recompression.
 export function zip(entries) {
  const chunks=[],central=[]; let offset=0;
- for(const [name,data] of entries){
-  const n=enc.encode(name),crc=crc32(data);
+ for(const [name,data,checksum] of entries){
+  const n=enc.encode(name),crc=checksum??crc32(data);
   let padding=(64-((offset+30+n.length)%64))%64; if(padding>0&&padding<4) padding+=64;
   const h=new Uint8Array(30+n.length+padding),v=new DataView(h.buffer);
   v.setUint32(0,0x04034b50,true);v.setUint16(4,20,true);v.setUint32(14,crc,true);v.setUint32(18,data.length,true);v.setUint32(22,data.length,true);v.setUint16(26,n.length,true);v.setUint16(28,padding,true);h.set(n,30);

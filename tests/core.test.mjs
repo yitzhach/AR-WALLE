@@ -54,3 +54,23 @@ test('enabling pinch clears measurement locks; enabling measurements disables pi
   setScaleOption(s,'resize',false);assert.equal(arFragment(s),'#allowsContentScaling=0');
  }
 });
+
+test('backup records discard unknown fields and nested edit keys',()=>{
+ const record=validateRecord({...piece(),data:'large encoded payload',libraryId:'foreign',unknown:{nested:true},normalize:'false',edits:{...INITIAL_EDITS,unknown:100}});
+ for(const key of ['data','libraryId','unknown'])assert.equal(Object.hasOwn(record,key),false);
+ assert.equal(Object.hasOwn(record.edits,'unknown'),false);
+ assert.equal(record.normalize,false);
+ assert.equal(record.blob.type,'image/jpeg');
+});
+test('CRC matches standard vector and cached assets preserve ZIP checksums',async()=>{
+ const {crc32,textureAsset,zip}=await import('../public/model.mjs');
+ assert.equal(crc32(new TextEncoder().encode('123456789')),0xcbf43926);
+ assert.equal(crc32(new Uint8Array()),0);
+ const blob=new Blob([original]);let reads=0;const read=blob.arrayBuffer.bind(blob);blob.arrayBuffer=()=>{reads++;return read();};
+ const [a,b]=await Promise.all([textureAsset(blob),textureAsset(blob)]);
+ assert.equal(a,b);assert.equal(reads,1);
+ const bytes=Buffer.from(await zip([['art.jpeg',a.bytes,a.crc]]).arrayBuffer());
+ assert.equal(bytes.readUInt32LE(14),crc32(original));
+ const direct=Buffer.from(await zip([['art.jpeg',original]]).arrayBuffer());
+ assert.deepEqual(bytes,direct);
+});

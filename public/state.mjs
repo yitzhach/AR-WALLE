@@ -40,5 +40,10 @@ export function validateRecord(r){
  if(!Number.isFinite(r.pixelWidth)||!Number.isFinite(r.pixelHeight)||r.pixelWidth<1||r.pixelHeight<1)throw Error('Invalid image dimensions.');
  validatePiece(r);
  for(const k of Object.keys(INITIAL_EDITS)){const v=r.edits?.[k];if(k.startsWith('flip')){if(typeof v!=='boolean')throw Error('Invalid flip setting.');}else if(!Number.isFinite(v)||Math.abs(v)>(k==='hue'?180:100))throw Error('Invalid image adjustment.');}
- if(typeof r.aspect!=='boolean'||!Number.isFinite(r.ratio)||r.ratio<=0)throw Error('Invalid aspect ratio.');return r;
+ if(typeof r.aspect!=='boolean'||!Number.isFinite(r.ratio)||r.ratio<=0)throw Error('Invalid aspect ratio.');
+ // Only trusted schema fields survive imports; never retain arbitrary backup keys.
+ return {id:r.id,name:r.name,blob:r.blob,pixelWidth:r.pixelWidth,pixelHeight:r.pixelHeight,
+  normalize:r.normalize===true,width:r.width,height:r.height,depth:r.depth,color:r.color,
+  aspect:r.aspect,ratio:r.ratio,edits:Object.fromEntries(Object.keys(INITIAL_EDITS).map(k=>[k,r.edits[k]])),
+  updatedAt:Number.isFinite(r.updatedAt)?r.updatedAt:Date.now(),trashed:r.trashed===true};
 }

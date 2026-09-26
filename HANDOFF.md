@@ -1,5 +1,5 @@
 # AR[T]WALLE — handoff
-Updated 2026-09-25. Read this first to continue without repeating prior work.
+Updated 2026-09-26. Read this first to continue without repeating prior work.
 
 ## Goal
 Place uploaded artwork at entered physical dimensions on iPhone walls using
@@ -7,14 +7,19 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 
 ## Now
 - Source of truth: https://github.com/yitzhach/AR-WALLE, branch `main`.
-- Continued main from `92b89b8`; this update adds a Library editor tab and
-  changes the displayed name to AR[T]WALLE. GitHub repository name stays AR-WALLE.
+- Continued main from `4b86f58`; performance, import safety, batch uploads and icons improved.
 - Cloudflare deployment is unverified; no live Cloudflare URL was supplied here.
 - User confirmed native pinch works on iPhone. Physical scale, reset and shadows remain unverified.
-- This update: 15/15 Node tests and production build pass.
-- Browser retest blocked: Chromium unavailable.
+- This update: 17/17 Node tests and production build pass.
+- Chromium mobile-viewport smoke passed: upload/autosave, thumbnails, reload,
+  Library add, USDZ download, backup/restore, partial batches and invalid imports.
+  Native iPhone checks remain.
 
 ## Done
+- Table-based CRC and weak Blob cache reuse texture bytes/checksums on AR rebuilds.
+- Session-cached 256-pixel library thumbnails; original files/undo remain intact.
+- Backup field whitelist, partial batch uploads, favicon and Apple touch icon.
+- GitHub Actions runs Node tests and production build on push/PR.
 - Dark default/light toggle; artwork sample; JPG/PNG uploads.
 - Up to 8 pieces, row/column/grid arrangements, spacing and duplication.
 - Manual inch dimensions/aspect lock; 3.5-inch default thickness; side-color eyedropper.
@@ -25,7 +30,7 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 - Pinch control hides measurement overlays; launch URL requests scaling on/off.
 - Panorama default fixed: 48-inch longest edge; 6:1 uploads start at 48 × 8 inches.
 - Photos/camera accept JPG/PNG and browser-decodable HEIC/HEIF; HEIC converts
-  locally to JPEG (phone source untouched). Five bottom editor tabs support keyboard use.
+  locally to JPEG (phone source untouched). Six bottom editor tabs support keyboard use.
 - New uploads auto-save to the local library. Editing still requires Save artwork changes;
   prior unsaved uploads can be saved manually. Remove selected is also on Artwork.
 - VIEW ON MY WALL sits directly below the preview; Image controls scroll while
@@ -35,8 +40,8 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
   backup/restore and undo actions. The original library section remains.
 - Labels preserve 8:1 ratio; art opaque; textures capped at 4096 pixels.
   JPEG/PNG originals retained; imported HEIC is saved as JPEG. Prior OpenUSD passed.
-- Browser checks covered sizing, duplication, themes, save/reload and scale-lock UI.
-  Upload/download automation stalled; do not claim those workflows passed.
+- Prior browser checks covered sizing, duplication, themes and scale-lock UI.
+  Current Chromium checks cover uploads/downloads; camera/HEIC still need iPhone.
 
 ## Decisions
 - Keep Quick Look/USDZ. No custom tracking, Android AR engine or native app.
@@ -72,19 +77,18 @@ Apple AR Quick Look and browser-generated USDZ. Static frontend; no AI or backen
 
 ## A–F / Backlog
 - A: fixed and regression tested in this update.
-- B: performance work below remains pending; soft delete/undo is intentional.
-- C: backup validation/copy import exists; field whitelisting and PWA remain pending.
-- D: Node tests/build exist; lint/type checks/CI/browser suite remain pending.
+- B: CRC/byte caching and thumbnails done; pixel-loop optimization remains pending.
+- C: backup validation/copy import and field whitelisting done; PWA remains pending.
+- D: Node tests/build and basic CI exist; lint/type checks/browser suite remain pending.
 - E: bottom editor tabs, dark/light toggle, limits and metadata exist; polish below remains pending.
 - F: Cloudflare deployment and real-iPhone acceptance remain unverified.
-- Performance: CRC lookup table; cache texture bytes/CRCs; precompute edit constants;
-  consider workers only if measured stalls justify them; small library thumbnails.
-- Data safety: whitelist imported fields; explore persistent-storage/PWA support.
+- Performance: precompute edit constants; consider workers only if measured stalls justify them.
+- Data safety: explore persistent-storage/PWA support.
   Browser storage can be evicted; no fixed retention guarantee. Keep export guidance.
   Do not silently purge recoverable library originals to optimize refresh.
 - Maintainability: readable formatting, focused modules, CI with USD validation,
   mesh extents/type checks if validators require them; avoid a broad rewrite.
-- Polish: favicon/touch icon, metadata, arrangement persistence, partial batch uploads.
+- Polish: arrangement persistence and further metadata polish.
   Keep user-requested dark default. Evaluate security headers without breaking Blob AR.
 
 ## Files
